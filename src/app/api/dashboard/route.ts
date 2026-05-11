@@ -5,37 +5,24 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get("userId")
-    const brandId = searchParams.get("brandId")
 
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 })
     }
 
-    const analysisWhere: any = { userId, status: "completed" }
-    if (brandId) analysisWhere.brandId = brandId
-
     const analyses = await prisma.analysis.findMany({
-      where: analysisWhere,
+      where: { userId, status: "completed" },
       orderBy: { createdAt: "desc" },
     })
 
-    const uploadWhere: any = { userId }
-    if (brandId) uploadWhere.brandId = brandId
-
     const uploads = await prisma.upload.findMany({
-      where: uploadWhere,
+      where: { userId },
       orderBy: { createdAt: "desc" },
       take: 10,
     })
 
-    const brands = await prisma.brand.findMany({
-      where: brandId ? { id: brandId } : { userId },
-    })
-
     const alerts = await prisma.alert.findMany({
-      where: brandId
-        ? { userId, analysisId: { in: analyses.map((a) => a.id) } }
-        : { userId },
+      where: { userId },
       orderBy: { createdAt: "desc" },
       take: 10,
     })
@@ -131,7 +118,6 @@ export async function GET(req: NextRequest) {
       currency,
       totalAnalyses: analyses.length,
       totalUploads: uploads.length,
-      totalBrands: brands.length,
       recentUploads: uploads.slice(0, 5),
       alerts: alerts,
     })

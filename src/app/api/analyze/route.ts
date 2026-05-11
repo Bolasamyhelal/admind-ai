@@ -5,16 +5,15 @@ import { buildAnalysisFromMetrics, createSmartAlerts } from "@/lib/analysis"
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { uploadId, userId, platform, rawData, brandId, parsedMetrics, brandName, currency } = body
+    const { uploadId, userId, platform, rawData, parsedMetrics, currency } = body
 
     const analysis = await prisma.analysis.create({
       data: {
-        title: `${brandName || "Analysis"} - ${new Date().toLocaleDateString("ar-EG")}`,
+        title: `Analysis - ${new Date().toLocaleDateString("ar-EG")}`,
         summary: "Processing...",
         status: "processing",
         userId,
         uploadId,
-        brandId: brandId || null,
         rawData: JSON.stringify(rawData || {}),
       },
     })
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const result = buildAnalysisFromMetrics(parsedMetrics, platform, brandName || "", currency)
+    const result = buildAnalysisFromMetrics(parsedMetrics, platform, currency)
 
     const updated = await prisma.analysis.update({
       where: { id: analysis.id },

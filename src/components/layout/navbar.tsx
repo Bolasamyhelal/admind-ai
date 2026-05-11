@@ -43,7 +43,7 @@ export function Navbar() {
             <input
               autoFocus
               onBlur={() => setShowSearch(false)}
-              placeholder="ابحث عن حملات، براندات..."
+              placeholder="ابحث عن حملات..."
               className="h-9 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 pr-9 pl-4 text-sm outline-none focus:border-purple-500"
             />
           </motion.div>

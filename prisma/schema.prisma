@@ -16,7 +16,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  brands     Brand[]
   clients    Client[]
   uploads    Upload[]
   analyses   Analysis[]
@@ -42,22 +41,6 @@ model Session {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Brand {
-  id        String   @id @default(cuid())
-  name      String
-  niche     String?
-  country   String?
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  uploads  Upload[]
-  analyses Analysis[]
-
-  @@index([userId])
 }
 
 model Client {
@@ -87,7 +70,6 @@ model Upload {
   status      String   @default("pending")
   userId      String
   clientId    String?
-  brandId     String?
   niche       String?
   country     String?
   createdAt   DateTime @default(now())
@@ -95,11 +77,9 @@ model Upload {
 
   user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   client   Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  brand    Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
   analyses Analysis[]
 
   @@index([userId])
-  @@index([brandId])
 }
 
 model Analysis {
@@ -116,18 +96,15 @@ model Analysis {
   userId        String
   uploadId      String?
   clientId      String?
-  brandId       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   upload   Upload?    @relation(fields: [uploadId], references: [id], onDelete: SetNull)
   client   Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  brand    Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
   reports  Report[]
 
   @@index([userId])
-  @@index([brandId])
   @@index([uploadId])
 }
 
@@ -169,7 +146,6 @@ model Creative {
   fileType  String?
   platform  String?
   notes     String?
-  brandId   String?
   aiScore   Float?
   aiAnalysis String?
   status    String   @default("pending")
@@ -180,7 +156,6 @@ model Creative {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([brandId])
 }
 
 model CampaignExecution {

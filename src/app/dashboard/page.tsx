@@ -115,15 +115,14 @@ function RecentUploads({ uploads }: { uploads: any[] }) {
           {uploads.slice(0, 5).map((upload: any) => (
             <div key={upload.id}
               className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              onClick={() => router.push(`/dashboard/brands/${upload.brandId}`)}
+              onClick={() => {
+                const analysisId = upload.analyses?.[0]?.id
+                if (analysisId) router.push(`/dashboard/analysis/${analysisId}`)
+              }}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{upload.fileName}</p>
-                <p className="text-xs text-gray-500">
-                  {upload.platform}
-                  {upload.brandId && " · "}
-                  {upload.niche}
-                </p>
+                <p className="text-xs text-gray-500">{upload.platform}</p>
               </div>
               <div className={`h-2 w-2 rounded-full shrink-0 mr-2 ${
                 upload.status === "completed" ? "bg-green-500" : upload.status === "processing" ? "bg-yellow-500 animate-pulse" : "bg-red-500"

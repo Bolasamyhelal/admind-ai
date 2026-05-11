@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
     const clientName = (formData.get("clientName") as string) || ""
     const campaignName = (formData.get("campaignName") as string) || ""
     const userId = formData.get("userId") as string
-    const brandName = (formData.get("brandName") as string) || ""
     const niche = (formData.get("niche") as string) || ""
     const country = (formData.get("country") as string) || ""
     const currency = (formData.get("currency") as string) || "USD"
@@ -38,26 +37,6 @@ export async function POST(req: NextRequest) {
       console.error("Parse error:", parseErr)
     }
 
-    let brandId: string | null = null
-
-    if (brandName) {
-      const existing = await prisma.brand.findFirst({
-        where: { name: brandName, userId },
-      })
-      if (existing) {
-        brandId = existing.id
-        await prisma.brand.update({
-          where: { id: existing.id },
-          data: { niche: niche || undefined, country: country || undefined },
-        })
-      } else {
-        const brand = await prisma.brand.create({
-          data: { name: brandName, niche, country, userId },
-        })
-        brandId = brand.id
-      }
-    }
-
     const upload = await prisma.upload.create({
       data: {
         fileName: file.name,
@@ -68,7 +47,6 @@ export async function POST(req: NextRequest) {
         campaignName,
         status: "processing",
         userId,
-        brandId,
         niche,
         country,
       },
@@ -77,11 +55,11 @@ export async function POST(req: NextRequest) {
     let analysis: any = null
 
     if (parsedMetrics) {
-      const result = buildAnalysisFromMetrics(parsedMetrics, platform, brandName, currency)
+      const result = buildAnalysisFromMetrics(parsedMetrics, platform, currency)
 
       analysis = await prisma.analysis.create({
         data: {
-          title: `${brandName || "Analysis"} - ${new Date().toLocaleDateString("ar-EG")}`,
+          title: `Analysis - ${new Date().toLocaleDateString("ar-EG")}`,
           summary: result.summary,
           insights: JSON.stringify(result.insights),
           recommendations: JSON.stringify(result.recommendations),
@@ -91,7 +69,6 @@ export async function POST(req: NextRequest) {
           status: "completed",
           userId,
           uploadId: upload.id,
-          brandId,
           rawData: JSON.stringify({ fileName: file.name, platform }),
         },
       })
@@ -107,7 +84,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       uploadId: upload.id,
-      brandId,
       analysisId: analysis?.id || null,
       parsedMetrics,
       message: "File uploaded and analyzed successfully",
@@ -122,14 +98,12 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get("userId")
-    const brandId = searchParams.get("brandId")
 
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 })
     }
 
     const where: any = { userId }
-    if (brandId) where.brandId = brandId
 
     const uploads = await prisma.upload.findMany({
       where,

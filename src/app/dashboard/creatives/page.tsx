@@ -80,8 +80,6 @@ export default function CreativesPage() {
       formData.append("name", creative.name)
       formData.append("platform", creative.platform || "")
       formData.append("notes", "إعادة تحليل: " + (creative.notes || ""))
-      formData.append("brandId", creative.brandId || "")
-
       // Create a tiny file to trigger analysis
       const blob = new Blob([""], { type: "text/plain" })
       formData.append("file", blob, "reat.txt")

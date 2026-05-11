@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 
-export function buildAnalysisFromMetrics(m: any, platform: string, brandName: string, currency = "USD") {
+export function buildAnalysisFromMetrics(m: any, platform: string, currency = "USD") {
   const roas = m.roas || (m.spend > 0 ? m.revenue / m.spend : 0)
   const cpa = m.cpa || (m.conversions > 0 ? m.spend / m.conversions : 0)
   const ctr = m.ctr || (m.impressions > 0 ? (m.clicks / m.impressions) * 100 : 0)
@@ -11,7 +11,7 @@ export function buildAnalysisFromMetrics(m: any, platform: string, brandName: st
   const freq = m.frequency || (m.impressions > 0 && m.reach > 0 ? m.impressions / m.reach : 1)
 
   const insights = []
-  if (roas >= 3) insights.push({ type: "positive", metric: "ROAS", message: `${brandName} ROAS at ${roas.toFixed(2)}x is excellent`, recommendation: "Consider scaling top-performing campaigns.", severity: "excellent" })
+  if (roas >= 3) insights.push({ type: "positive", metric: "ROAS", message: `ROAS at ${roas.toFixed(2)}x is excellent`, recommendation: "Consider scaling top-performing campaigns.", severity: "excellent" })
   else if (roas >= 2) insights.push({ type: "positive", metric: "ROAS", message: `ROAS at ${roas.toFixed(2)}x is healthy`, severity: "good" })
   else insights.push({ type: "warning", metric: "ROAS", message: `ROAS at ${roas.toFixed(2)}x is below target`, severity: "warning" })
 
@@ -26,7 +26,7 @@ export function buildAnalysisFromMetrics(m: any, platform: string, brandName: st
   if (profit < 0) insights.push({ type: "critical", metric: "Profit", message: `Campaign at a loss of $${Math.abs(profit).toFixed(2)}`, severity: "critical" })
 
   return {
-    summary: `${brandName || "Campaign"}: ${m.spend > 0 ? `$ ${m.spend.toLocaleString()} إنفاق، $ ${m.revenue?.toLocaleString() || 0} إيرادات، ROAS ${roas.toFixed(2)}x` : "لا توجد بيانات إنفاق كافية للتحليل"}`,
+    summary: `${m.spend > 0 ? `$ ${m.spend.toLocaleString()} إنفاق، $ ${m.revenue?.toLocaleString() || 0} إيرادات، ROAS ${roas.toFixed(2)}x` : "لا توجد بيانات إنفاق كافية للتحليل"}`,
     metrics: {
       spend: m.spend || 0, revenue: m.revenue || 0, roas, cpa, ctr, cpm, cpc,
       conversionRate: convRate, frequency: freq,
@@ -34,7 +34,7 @@ export function buildAnalysisFromMetrics(m: any, platform: string, brandName: st
     },
     insights,
     recommendations: [
-      { type: roas >= 3 ? "scaling" : "optimize", title: roas >= 3 ? `توسيع حملات ${brandName} الناجحة` : `تحسين حملات ${brandName}`, description: roas >= 3 ? "الأداء القوي يستحق زيادة الميزانية" : "التركيز على تحسين CPA و CTR", priority: "high", impact: roas >= 3 ? `+$${Math.round(m.revenue * 0.25).toLocaleString()}` : "تحسين الكفاءة", action: roas >= 3 ? "زيادة الميزانية 25% ومراقبة 3 أيام" : "تجربة 5 إعلانات جديدة" },
+      { type: roas >= 3 ? "scaling" : "optimize", title: roas >= 3 ? "توسيع الحملات الناجحة" : "تحسين الحملات", description: roas >= 3 ? "الأداء القوي يستحق زيادة الميزانية" : "التركيز على تحسين CPA و CTR", priority: "high", impact: roas >= 3 ? `+$${Math.round(m.revenue * 0.25).toLocaleString()}` : "تحسين الكفاءة", action: roas >= 3 ? "زيادة الميزانية 25% ومراقبة 3 أيام" : "تجربة 5 إعلانات جديدة" },
       { type: "duplicate", title: "نسخ المجموعات الإعلانية الناجحة", description: "تطبيق الجماهير والإعلانات عالية الأداء على حملات جديدة", priority: "medium", impact: "توسيع الجماهير المثبتة", action: "إنشاء جماهير مشابهة من أفضل الإعلانات" },
       { type: "optimize", title: "تجديد الإعلانات", description: freq > 3 ? "معدل التكرار مرتفع — حان وقت إعلانات جديدة" : "اختبار الإعلانات بانتظام يحسن الأداء", priority: freq > 3 ? "high" : "medium", impact: freq > 3 ? "تحسين CTR" : "تحسن مستمر", action: "اختبار 3-5 إعلانات جديدة" },
     ],

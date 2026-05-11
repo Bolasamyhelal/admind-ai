@@ -10,8 +10,6 @@ export async function POST(req: NextRequest) {
     const name = (formData.get("name") as string) || file?.name || "Creative"
     const platform = (formData.get("platform") as string) || ""
     const notes = (formData.get("notes") as string) || ""
-    const brandId = (formData.get("brandId") as string) || ""
-
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 })
     }
@@ -26,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const creative = await prisma.creative.create({
-      data: { name, fileData, fileType, platform, notes, brandId: brandId || null, userId, status: "pending" },
+      data: { name, fileData, fileType, platform, notes, userId, status: "pending" },
     })
 
     // AI Analysis (non-blocking - fire and forget)
@@ -43,14 +41,12 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get("userId")
-    const brandId = searchParams.get("brandId")
 
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 })
     }
 
     const where: any = { userId }
-    if (brandId) where.brandId = brandId
 
     const creatives = await prisma.creative.findMany({
       where,

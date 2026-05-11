@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface FileUploaderProps {
-  onUpload: (file: File, platform: string, brand: string, niche: string, country: string, currency: string) => void
+  onUpload: (file: File, platform: string, niche: string, country: string, currency: string) => void
   platform: string
   disabled?: boolean
 }
@@ -55,7 +55,6 @@ const currencies = ["USD", "EGP", "SAR", "AED", "EUR", "GBP"]
 export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps) {
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const [brandName, setBrandName] = useState("")
   const [niche, setNiche] = useState("")
   const [country, setCountry] = useState("")
   const [currency, setCurrency] = useState("USD")
@@ -83,7 +82,6 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
 
   const handleReset = () => {
     setFile(null)
-    setBrandName("")
     setNiche("")
     setCountry("")
     setCurrency("USD")
@@ -150,17 +148,6 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
 
               <div className="w-full max-w-md space-y-4 text-right" dir="rtl">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">اسم البراند</label>
-                  <input
-                    dir="rtl"
-                    placeholder="مثال: نون, جرير, شي إن..."
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    disabled={disabled}
-                    className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">التخصص (Niche)</label>
                   <select
                     dir="rtl"
@@ -208,8 +195,8 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
 
               <div className="flex gap-3 mt-6">
                 <Button
-                  onClick={() => onUpload(file, platform, brandName, niche, country, currency)}
-                  disabled={disabled || !brandName || !niche || !country}
+                  onClick={() => onUpload(file, platform, niche, country, currency)}
+                  disabled={disabled || !niche || !country}
                 >
                   {disabled ? "جاري الرفع والتحليل..." : "رفع وتحليل"}
                 </Button>

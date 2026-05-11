@@ -44,7 +44,7 @@ export default function UploadPage() {
     } catch {}
   }
 
-  const handleUpload = async (file: File, platform: string, brandName: string, niche: string, country: string, currency: string = "USD") => {
+  const handleUpload = async (file: File, platform: string, niche: string, country: string, currency: string = "USD") => {
     if (!user) { setError("Please sign in first"); return }
     setError("")
     setUploading(true)
@@ -54,7 +54,6 @@ export default function UploadPage() {
       formData.append("file", file)
       formData.append("platform", platform)
       formData.append("userId", user.id)
-      formData.append("brandName", brandName)
       formData.append("niche", niche)
       formData.append("country", country)
       formData.append("currency", currency)
@@ -65,8 +64,8 @@ export default function UploadPage() {
       const uploadData = await uploadRes.json()
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed")
 
-      if (uploadData.brandId) {
-        router.push(`/dashboard/brands/${uploadData.brandId}`)
+      if (uploadData.analysisId) {
+        router.push(`/dashboard/analysis/${uploadData.analysisId}`)
       } else {
         router.push("/dashboard")
       }
