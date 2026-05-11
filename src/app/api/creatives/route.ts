@@ -65,6 +65,12 @@ export async function GET(req: NextRequest) {
 }
 
 async function analyzeCreative(id: string, name: string, platform: string, notes: string, fileType: string | null) {
+  // Fetch the creative to get its fileData (image)
+  let fileData: string | null = null
+  try {
+    const creative = await prisma.creative.findUnique({ where: { id } })
+    if (creative) fileData = creative.fileData
+  } catch {}
   try {
     const prompt = `أنت خبير تحليل إعلانات رقمية. حلل هذا الإعلان وقدم تقييمًا دقيقًا:
 
@@ -85,7 +91,15 @@ async function analyzeCreative(id: string, name: string, platform: string, notes
   "bestPlatform": "أفضل منصة لهذا الإعلان"
 }`
 
-    const content = await askAI(prompt)
+    let imageArg: { mimeType: string; data: string } | undefined
+    if (fileData && fileData.startsWith("data:image/")) {
+      const parts = fileData.split(",")
+      const mimeMatch = fileData.match(/^data:(image\/\w+);/)
+      if (parts.length > 1 && mimeMatch) {
+        imageArg = { mimeType: mimeMatch[1], data: parts[1] }
+      }
+    }
+    const content = await askAI(prompt, true, imageArg)
     const analysis = JSON.parse(content)
 
     await prisma.creative.update({

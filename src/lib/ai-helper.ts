@@ -34,8 +34,62 @@ function cleanJsonExtract(text: string): string {
   return extracted
 }
 
-export async function askAI(prompt: string, jsonMode = true): Promise<string> {
-  // Groq free tier first (Llama 3, Mixtral, Gemma — no credit card needed)
+export async function askAI(prompt: string, jsonMode = true, imageData?: { mimeType: string; data: string }): Promise<string> {
+  const jsonSuffix = jsonMode ? "\n\nأرسل الرد بصيغة JSON فقط بدون أي نص إضافي. ابدأ بـ { وانتهي بـ }" : ""
+
+  // If image is provided, skip Groq (no vision) — try Gemini (vision-capable) first, then OpenAI
+  if (imageData) {
+    // Gemini with image
+    if (genAI) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.0-flash",
+          generationConfig: { temperature: 0.7 },
+        })
+        const result = await model.generateContent([
+          { text: prompt + (imageData ? jsonSuffix : "") },
+          { inlineData: { mimeType: imageData.mimeType, data: imageData.data } },
+        ])
+        const text = result.response.text()
+        if (jsonMode) {
+          const cleaned = cleanJsonExtract(text)
+          let parsed: any
+          try { parsed = JSON.parse(cleaned) } catch (e2: any) {
+            return JSON.stringify({ _raw: cleaned.slice(0, 500), _error: e2.message })
+          }
+          return JSON.stringify(parsed)
+        }
+        return text
+      } catch (err: any) {
+        const msg = err?.message?.toString() || err?.toString() || ""
+        try { fs.writeFileSync(path.join(process.cwd(), "tmp", "gemini-error.log"), msg, "utf8") } catch {}
+        console.warn("Gemini vision failed:", msg.slice(0, 150))
+      }
+    }
+    // Fallback: OpenAI with image
+    if (openai) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: prompt + jsonSuffix },
+              { type: "image_url", image_url: { url: `data:${imageData.mimeType};base64,${imageData.data}` } },
+            ],
+          }],
+          temperature: 0.7,
+          ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+        })
+        return completion.choices[0]?.message?.content || ""
+      } catch (err: any) {
+        console.error("OpenAI vision failed:", err?.message?.slice(0, 100))
+      }
+    }
+    throw new Error("لا يوجد موديل يدعم تحليل الصور — تأكد من GEMINI_API_KEY أو OPENAI_API_KEY")
+  }
+
+  // Text-only: Groq free tier first (no credit card needed)
   if (groq) {
     try {
       const completion = await groq.chat.completions.create({
@@ -60,23 +114,18 @@ export async function askAI(prompt: string, jsonMode = true): Promise<string> {
       }
       return text
     } catch (err: any) {
-      console.warn("Groq failed:", err?.message?.slice(0, 100))
+      console.warn("Groq failed:", (err?.message?.toString() || "").slice(0, 100))
     }
   }
 
-  // Fallback to Gemini (free tier)
+  // Text-only fallback: Gemini
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({
         model: "gemini-2.0-flash",
-        generationConfig: {
-          temperature: 0.7,
-        },
+        generationConfig: { temperature: 0.7 },
       })
-      const result = await model.generateContent(jsonMode
-        ? `${prompt}\n\nأرسل الرد بصيغة JSON فقط بدون أي نص إضافي. ابدأ بـ { وانتهي بـ }`
-        : prompt
-      )
+      const result = await model.generateContent(prompt + jsonSuffix)
       const text = result.response.text()
       if (jsonMode) {
         const cleaned = cleanJsonExtract(text)
@@ -98,7 +147,7 @@ export async function askAI(prompt: string, jsonMode = true): Promise<string> {
     }
   }
 
-  // Fallback to OpenAI (paid key)
+  // Text-only fallback: OpenAI
   if (openai) {
     try {
       const completion = await openai.chat.completions.create({
