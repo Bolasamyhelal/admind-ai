@@ -241,31 +241,31 @@ export default function BrandDetailPage() {
         </div>
 
         {/* ===== QUICK STATS BAR ===== */}
-        {campaignStats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-            {[
-              { label: "إجمالي الإنفاق", value: formatCurrency(campaignStats.totalSpend || 0, campaignStats.currency || currency), icon: DollarSign, color: "purple" },
-              { label: "إجمالي الميزانية", value: formatCurrency(campaignStats.totalBudget || 0, campaignStats.currency || currency), icon: Wallet, color: "blue" },
-              { label: "الحملات النشطة", value: `${campaignStats.active || 0} / ${campaignStats.total || 0}`, icon: Play, color: "green" },
-              { label: "الكريتفز", value: creatives.length || 0, icon: Image, color: "pink" },
-              { label: "التحليلات", value: allData?.totalAnalyses || 0, icon: BarChart3, color: "amber" },
-              { label: "التنبيهات", value: alerts.filter((a: any) => a.severity === "critical").length || 0, icon: AlertCircle, color: "red" },
-            ].map((stat, i) => (
-              <motion.div key={stat.label}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`p-1.5 rounded-lg bg-${stat.color}-50 dark:bg-${stat.color}-900/20`}>
-                    <stat.icon className={`h-4 w-4 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+          {campaignStats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              {[
+                { label: "إجمالي الإنفاق", value: formatCurrency(campaignStats.totalSpend || 0, campaignStats.currency || currency), icon: DollarSign, bg: "bg-purple-50 dark:bg-purple-900/20", text: "text-purple-600 dark:text-purple-400" },
+                { label: "إجمالي الميزانية", value: formatCurrency(campaignStats.totalBudget || 0, campaignStats.currency || currency), icon: Wallet, bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-600 dark:text-blue-400" },
+                { label: "الحملات النشطة", value: `${campaignStats.active || 0} / ${campaignStats.total || 0}`, icon: Play, bg: "bg-green-50 dark:bg-green-900/20", text: "text-green-600 dark:text-green-400" },
+                { label: "الكريتفز", value: creatives.length || 0, icon: Image, bg: "bg-pink-50 dark:bg-pink-900/20", text: "text-pink-600 dark:text-pink-400" },
+                { label: "التحليلات", value: allData?.totalAnalyses || 0, icon: BarChart3, bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-600 dark:text-amber-400" },
+                { label: "التنبيهات", value: alerts.filter((a: any) => a.severity === "critical").length || 0, icon: AlertCircle, bg: "bg-red-50 dark:bg-red-900/20", text: "text-red-600 dark:text-red-400" },
+              ].map((stat, i) => (
+                <motion.div key={stat.label}
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`p-1.5 rounded-lg ${stat.bg}`}>
+                      <stat.icon className={`h-4 w-4 ${stat.text}`} />
+                    </div>
+                    <span className="text-xs text-gray-400">{stat.label}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{stat.label}</span>
-                </div>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{stat.value}</p>
-              </motion.div>
-            ))}
-          </div>
-        )}
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
         {loadingExtra && (
           <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 py-1">
