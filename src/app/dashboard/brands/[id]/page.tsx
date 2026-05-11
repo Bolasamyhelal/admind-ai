@@ -27,6 +27,7 @@ export default function BrandDetailPage() {
   const [allData, setAllData] = useState<any>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
+  const [loadingExtra, setLoadingExtra] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [selectedCreative, setSelectedCreative] = useState<any>(null)
@@ -42,32 +43,41 @@ export default function BrandDetailPage() {
     setError("")
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000)
-      const allRes = await fetch(`/api/brand-dashboard?id=${brandId}`, { signal: controller.signal })
+      const timeoutId = setTimeout(() => controller.abort(), 12000)
+      const res = await fetch(`/api/brand-dashboard?id=${brandId}`, { signal: controller.signal })
       clearTimeout(timeoutId)
-      if (!allRes.ok) {
-        const errData = await allRes.json().catch(() => ({}))
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
         throw new Error(errData.error || "فشل تحميل البراند")
       }
-      const allData_ = await allRes.json()
-      setBrand(allData_.brand)
-      setAllData(allData_)
-      setDashData({ metrics: allData_.metrics, monthlyData: null, alerts: allData_.alerts, currency: allData_?.campaignStats?.currency || "USD" })
+      const data = await res.json()
+      setBrand(data.brand)
+      setAllData(data)
+      setDashData({ metrics: data.metrics, monthlyData: null, alerts: [], currency: "USD" })
+
+      setLoading(false)
+      // Lazy-load extra data after initial render
+      setLoadingExtra(true)
+      fetch(`/api/brand-extra?brandId=${brandId}&type=all`)
+        .then((r) => r.json())
+        .then((extra) => {
+          setAllData((prev: any) => ({ ...prev, ...extra }))
+          setDashData((prev: any) => ({ ...prev, alerts: extra.alerts || [], currency: extra.campaignStats?.currency || "USD" }))
+        })
+        .catch(() => {})
+        .finally(() => setLoadingExtra(false))
     } catch (err: any) {
       if (err.name === "AbortError") {
         setError("انتهت مهلة التحميل — الخادم يستغرق وقتًا طويلاً. حاول مرة أخرى.")
       } else {
         setError(err.message || "حدث خطأ أثناء تحميل البيانات")
       }
-    } finally {
       setLoading(false)
     }
   }, [user, brandId])
 
   useEffect(() => {
-    const controller = new AbortController()
     fetchData()
-    return () => controller.abort()
   }, [fetchData])
 
   const handleDelete = async () => {
@@ -254,6 +264,13 @@ export default function BrandDetailPage() {
                 <p className="text-lg font-bold text-gray-900 dark:text-white">{stat.value}</p>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {loadingExtra && (
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 py-1">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            جاري تحميل الحملات والكريتفز...
           </div>
         )}
 
