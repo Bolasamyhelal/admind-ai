@@ -41,19 +41,15 @@ export default function BrandDetailPage() {
     setLoading(true)
     setError("")
     try {
-      const [brandRes, dashRes, allRes] = await Promise.all([
-        fetch(`/api/brands?id=${brandId}`),
-        fetch(`/api/dashboard?userId=${user.id}&brandId=${brandId}`),
-        fetch(`/api/brand-dashboard?id=${brandId}`),
-      ])
-      const brandData = await brandRes.json()
-      if (!brandRes.ok) throw new Error(brandData.error || "فشل تحميل البراند")
-      if (!brandData.brand) throw new Error("البراند غير موجود")
-      setBrand(brandData.brand)
-      const dashData_ = await dashRes.json()
-      if (dashRes.ok) setDashData(dashData_)
+      const allRes = await fetch(`/api/brand-dashboard?id=${brandId}`)
+      if (!allRes.ok) {
+        const errData = await allRes.json().catch(() => ({}))
+        throw new Error(errData.error || "فشل تحميل البراند")
+      }
       const allData_ = await allRes.json()
-      if (allRes.ok) setAllData(allData_)
+      setBrand(allData_.brand)
+      setAllData(allData_)
+      setDashData({ metrics: allData_.metrics, monthlyData: null, alerts: allData_.alerts, currency: allData_?.campaignStats?.currency || "USD" })
     } catch (err: any) {
       setError(err.message)
     } finally {
