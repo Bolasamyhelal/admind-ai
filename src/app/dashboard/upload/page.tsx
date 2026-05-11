@@ -65,30 +65,11 @@ export default function UploadPage() {
       const uploadData = await uploadRes.json()
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed")
 
-      const realMetrics = uploadData.parsedMetrics
-
-      const analyzeRes = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uploadId: uploadData.uploadId,
-          userId: user.id,
-          platform,
-          brandId: uploadData.brandId,
-          brandName,
-          niche,
-          country,
-          currency,
-          rawData: { fileName: file.name, platform },
-          parsedMetrics: realMetrics,
-        }),
-      })
-      const analyzeData = await analyzeRes.json()
-      if (!analyzeRes.ok || analyzeData.success === false) {
-        throw new Error(analyzeData.error || "تعذر تحليل الملف")
+      if (uploadData.brandId) {
+        router.push(`/dashboard/brands/${uploadData.brandId}`)
+      } else {
+        router.push("/dashboard")
       }
-
-      router.push(`/dashboard/brands/${uploadData.brandId}`)
     } catch (err: any) {
       setError(err.message || "Something went wrong")
     } finally {

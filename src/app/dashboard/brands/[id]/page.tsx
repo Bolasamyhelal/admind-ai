@@ -41,7 +41,10 @@ export default function BrandDetailPage() {
     setLoading(true)
     setError("")
     try {
-      const allRes = await fetch(`/api/brand-dashboard?id=${brandId}`)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      const allRes = await fetch(`/api/brand-dashboard?id=${brandId}`, { signal: controller.signal })
+      clearTimeout(timeoutId)
       if (!allRes.ok) {
         const errData = await allRes.json().catch(() => ({}))
         throw new Error(errData.error || "فشل تحميل البراند")
@@ -51,13 +54,21 @@ export default function BrandDetailPage() {
       setAllData(allData_)
       setDashData({ metrics: allData_.metrics, monthlyData: null, alerts: allData_.alerts, currency: allData_?.campaignStats?.currency || "USD" })
     } catch (err: any) {
-      setError(err.message)
+      if (err.name === "AbortError") {
+        setError("انتهت مهلة التحميل — الخادم يستغرق وقتًا طويلاً. حاول مرة أخرى.")
+      } else {
+        setError(err.message || "حدث خطأ أثناء تحميل البيانات")
+      }
     } finally {
       setLoading(false)
     }
   }, [user, brandId])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchData()
+    return () => controller.abort()
+  }, [fetchData])
 
   const handleDelete = async () => {
     if (!window.confirm("هل أنت متأكد من حذف هذا البراند؟ لا يمكن التراجع عن هذا الإجراء.")) return
@@ -146,10 +157,20 @@ export default function BrandDetailPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-20">
-          <AlertCircle className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-          <p className="text-gray-500 mb-2">{error || "البراند غير موجود"}</p>
-          <button onClick={fetchData} className="text-sm text-purple-600 hover:underline ml-3">إعادة المحاولة</button>
-          <button onClick={() => router.push("/dashboard/brands")} className="text-sm text-gray-500 hover:underline">العودة للبراندات</button>
+          <AlertCircle className="mx-auto h-10 w-10 text-red-400 mb-3" />
+          <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">تعذر تحميل صفحة البراند</p>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">{error || "البراند غير موجود"}</p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={fetchData} className="rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-purple-700 transition-colors">
+              إعادة المحاولة
+            </button>
+            <button onClick={() => router.push("/dashboard/brands")} className="rounded-xl border border-gray-200 dark:border-gray-700 px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              العودة للبراندات
+            </button>
+          </div>
+          {error?.includes("مهلة") && (
+            <p className="text-xs text-gray-400 mt-6">قد يكون الخادم بطيئًا في أول استخدام (Cold Start). انتظر دقيقة وحاول مرة أخرى.</p>
+          )}
         </div>
       </DashboardLayout>
     )

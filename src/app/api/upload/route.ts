@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { parseMetaReport, aggregateMetaData } from "@/lib/parsers/meta-parser"
+import { buildAnalysisFromMetrics, createSmartAlerts } from "@/lib/analysis"
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,9 +14,14 @@ export async function POST(req: NextRequest) {
     const brandName = (formData.get("brandName") as string) || ""
     const niche = (formData.get("niche") as string) || ""
     const country = (formData.get("country") as string) || ""
+    const currency = (formData.get("currency") as string) || "USD"
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: "userId required" }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
@@ -24,16 +30,13 @@ export async function POST(req: NextRequest) {
     try {
       if (platform === "meta") {
         const rows = parseMetaReport(buffer)
-        console.log(`Parsed ${rows.length} rows from Meta file`)
         if (rows.length > 0) {
           parsedMetrics = aggregateMetaData(rows)
-          console.log("Parsed metrics:", JSON.stringify(parsedMetrics))
         }
       }
     } catch (parseErr) {
       console.error("Parse error:", parseErr)
     }
-    if (!parsedMetrics) console.log("No parsed metrics — will fall back to mock")
 
     let brandId: string | null = null
 
@@ -71,12 +74,43 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    let analysis: any = null
+
+    if (parsedMetrics) {
+      const result = buildAnalysisFromMetrics(parsedMetrics, platform, brandName, currency)
+
+      analysis = await prisma.analysis.create({
+        data: {
+          title: `${brandName || "Analysis"} - ${new Date().toLocaleDateString("ar-EG")}`,
+          summary: result.summary,
+          insights: JSON.stringify(result.insights),
+          recommendations: JSON.stringify(result.recommendations),
+          metrics: JSON.stringify(result.metrics),
+          predictions: JSON.stringify(result.predictions),
+          marketData: JSON.stringify(result.marketInfo),
+          status: "completed",
+          userId,
+          uploadId: upload.id,
+          brandId,
+          rawData: JSON.stringify({ fileName: file.name, platform }),
+        },
+      })
+
+      await prisma.upload.update({
+        where: { id: upload.id },
+        data: { status: "completed" },
+      })
+
+      await createSmartAlerts(userId, result)
+    }
+
     return NextResponse.json({
       success: true,
       uploadId: upload.id,
       brandId,
+      analysisId: analysis?.id || null,
       parsedMetrics,
-      message: "File uploaded successfully",
+      message: "File uploaded and analyzed successfully",
     })
   } catch (error) {
     console.error("Upload error:", error)
