@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { askAI } from "@/lib/ai-helper"
+import { askAI, visionAnalysis } from "@/lib/ai-helper"
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,15 +91,19 @@ async function analyzeCreative(id: string, name: string, platform: string, notes
   "bestPlatform": "أفضل منصة لهذا الإعلان"
 }`
 
-    let imageArg: { mimeType: string; data: string } | undefined
+    let content: string
     if (fileData && fileData.startsWith("data:image/")) {
       const parts = fileData.split(",")
       const mimeMatch = fileData.match(/^data:(image\/\w+);/)
       if (parts.length > 1 && mimeMatch) {
-        imageArg = { mimeType: mimeMatch[1], data: parts[1] }
+        const imageArg = { mimeType: mimeMatch[1], data: parts[1] }
+        content = await visionAnalysis(prompt, true, imageArg)
+      } else {
+        content = await askAI(prompt, true)
       }
+    } else {
+      content = await askAI(prompt, true)
     }
-    const content = await askAI(prompt, true, imageArg)
     const analysis = JSON.parse(content)
 
     await prisma.creative.update({
