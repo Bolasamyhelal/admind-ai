@@ -25,7 +25,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     )
   }
 
-  if (!user) return null
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">يرجى تسجيل الدخول</p>
+          <button onClick={() => router.push("/sign-in")} className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-purple-700 transition-colors">
+            تسجيل الدخول
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

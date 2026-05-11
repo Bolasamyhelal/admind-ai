@@ -1,28 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
-
-async function getUser() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("session")?.value
-  if (!token) return null
-  const session = await prisma.session.findUnique({ where: { token }, include: { user: true } })
-  return session?.user ?? null
-}
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getUser()
-    if (!user) return NextResponse.json({ error: "غير مصرح" }, { status: 401 })
-
     const { searchParams } = new URL(req.url)
     const brandId = searchParams.get("brandId")
+    const userId = searchParams.get("userId")
     const type = searchParams.get("type") || "all"
 
     if (!brandId) return NextResponse.json({ error: "brandId required" }, { status: 400 })
+    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 401 })
 
     const brand = await prisma.brand.findFirst({
-      where: { id: brandId, userId: user.id },
+      where: { id: brandId, userId },
       select: { name: true },
     })
     if (!brand) return NextResponse.json({ error: "البراند غير موجود" }, { status: 404 })

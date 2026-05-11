@@ -44,7 +44,7 @@ export default function BrandDetailPage() {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 12000)
-      const res = await fetch(`/api/brand-dashboard?id=${brandId}`, { signal: controller.signal })
+      const res = await fetch(`/api/brand-dashboard?id=${brandId}&userId=${user.id}`, { signal: controller.signal })
       clearTimeout(timeoutId)
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))
@@ -58,7 +58,7 @@ export default function BrandDetailPage() {
       setLoading(false)
       // Lazy-load extra data after initial render
       setLoadingExtra(true)
-      fetch(`/api/brand-extra?brandId=${brandId}&type=all`)
+      fetch(`/api/brand-extra?brandId=${brandId}&userId=${user.id}&type=all`)
         .then((r) => r.json())
         .then((extra) => {
           setAllData((prev: any) => ({ ...prev, ...extra }))
