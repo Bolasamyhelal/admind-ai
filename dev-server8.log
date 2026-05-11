@@ -1,0 +1,181 @@
+
+> admind-ai@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.3:3000
+- Environments: .env
+✓ Ready in 13.3s
+⚠ Slow filesystem detected. The benchmark took 378ms. If D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /api/niche-research ...
+ POST /api/niche-research 401 in 21.6s (next.js: 20.8s, application-code: 818ms)
+ GET /dashboard/site-analyzer 200 in 37.4s (next.js: 36.8s, application-code: 629ms)
+ GET /api/auth/me 200 in 2.1s (next.js: 418ms, application-code: 1646ms)
+ POST /api/auth/register 200 in 1025ms (next.js: 221ms, application-code: 804ms)
+ POST /api/niche-research 200 in 4.4s (next.js: 3ms, application-code: 4.4s)
+○ Compiling /dashboard/niche-research ...
+ GET /dashboard/niche-research 200 in 3.7s (next.js: 3.7s, application-code: 72ms)
+○ Compiling /dashboard ...
+ GET /dashboard 200 in 10.3s (next.js: 10.2s, application-code: 82ms)
+ GET /api/dashboard?userId=cmozno0i60000aungytuoyysi 200 in 729ms (next.js: 325ms, application-code: 403ms)
+ GET /api/dashboard?userId=cmozno0i60000aungytuoyysi 200 in 16ms (next.js: 5ms, application-code: 11ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+ GET /dashboard/reports 200 in 1961ms (next.js: 1801ms, application-code: 160ms)
+ GET /api/analyze?userId=cmozno0i60000aungytuoyysi 200 in 417ms (next.js: 406ms, application-code: 11ms)
+ GET /api/analyze?userId=cmozno0i60000aungytuoyysi 200 in 18ms (next.js: 6ms, application-code: 12ms)
+ GET /dashboard/analysis/cmozxg9ee0005uc6f4h8tc6ha 200 in 16.6s (next.js: 16.6s, application-code: 62ms)
+ GET /api/analyze?id=cmozxg9ee0005uc6f4h8tc6ha 200 in 151ms (next.js: 28ms, application-code: 123ms)
+ GET /api/analyze?id=cmozxg9ee0005uc6f4h8tc6ha 200 in 25ms (next.js: 9ms, application-code: 16ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+✓ Finished filesystem cache database compaction in 10.3s
+ GET /dashboard/reports 200 in 90ms (next.js: 21ms, application-code: 70ms)
+ GET /api/analyze?userId=cmozno0i60000aungytuoyysi 200 in 13ms (next.js: 5ms, application-code: 8ms)
+ GET /api/analyze?userId=cmozno0i60000aungytuoyysi 200 in 13ms (next.js: 4ms, application-code: 9ms)
+ GET /dashboard/analysis/cmozxg9ee0005uc6f4h8tc6ha 200 in 78ms (next.js: 13ms, application-code: 66ms)
+ GET /api/analyze?id=cmozxg9ee0005uc6f4h8tc6ha 200 in 20ms (next.js: 7ms, application-code: 13ms)
+ GET /api/analyze?id=cmozxg9ee0005uc6f4h8tc6ha 200 in 11ms (next.js: 3ms, application-code: 8ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+ GET /dashboard/upload 200 in 1078ms (next.js: 1040ms, application-code: 37ms)
+ GET /api/upload?userId=cmozno0i60000aungytuoyysi 200 in 1272ms (next.js: 1188ms, application-code: 84ms)
+ GET /api/upload?userId=cmozno0i60000aungytuoyysi 200 in 17ms (next.js: 6ms, application-code: 11ms)
+ DELETE /api/upload?id=cmozxg8nx0003uc6fl5zgw0kb 200 in 1038ms (next.js: 4ms, application-code: 1034ms)
+ GET /dashboard 200 in 65ms (next.js: 17ms, application-code: 48ms)
+ GET /api/dashboard?userId=cmozno0i60000aungytuoyysi 200 in 18ms (next.js: 4ms, application-code: 15ms)
+ GET /api/dashboard?userId=cmozno0i60000aungytuoyysi 200 in 16ms (next.js: 3ms, application-code: 13ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width. (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+ GET /dashboard/brands 200 in 953ms (next.js: 916ms, application-code: 37ms)
+ GET /api/brands?userId=cmozno0i60000aungytuoyysi 200 in 599ms (next.js: 308ms, application-code: 291ms)
+ GET /api/brands?userId=cmozno0i60000aungytuoyysi 200 in 17ms (next.js: 3ms, application-code: 14ms)
+ DELETE /api/brands?id=cmozxg82q0001uc6fy42fh2v8 200 in 205ms (next.js: 5ms, application-code: 200ms)
+○ Compiling /dashboard/settings ...
+ GET /dashboard/settings 200 in 5.8s (next.js: 5.8s, application-code: 82ms)
+✓ Finished filesystem cache database compaction in 25.3s
+✓ Compiled in 1185ms
+ GET /dashboard/settings 200 in 216ms (next.js: 13ms, application-code: 203ms)
+ GET /dashboard/settings 200 in 216ms (next.js: 98ms, application-code: 118ms)
+ GET /dashboard/settings 200 in 217ms (next.js: 49ms, application-code: 167ms)
+ GET /dashboard/settings 200 in 1645ms (next.js: 80ms, application-code: 1565ms)
+ GET /dashboard/settings 200 in 2.7s (next.js: 961ms, application-code: 1736ms)
+ GET /dashboard/settings 200 in 1670ms (next.js: 11ms, application-code: 1659ms)
+ GET /api/auth/me 200 in 282ms (next.js: 224ms, application-code: 58ms)
+ GET /dashboard/settings 200 in 666ms (next.js: 424ms, application-code: 242ms)
+ GET /dashboard/settings 200 in 199ms (next.js: 6ms, application-code: 193ms)
+ GET /dashboard/settings 200 in 177ms (next.js: 8ms, application-code: 169ms)
+ GET /dashboard/settings 200 in 178ms (next.js: 34ms, application-code: 143ms)
+ GET /dashboard/settings 200 in 180ms (next.js: 65ms, application-code: 115ms)
+ GET /dashboard/settings 200 in 329ms (next.js: 96ms, application-code: 232ms)
+ GET /dashboard/settings 200 in 234ms (next.js: 4ms, application-code: 231ms)
+ GET /dashboard/settings 200 in 193ms (next.js: 10ms, application-code: 184ms)
+ GET /dashboard/settings 200 in 39ms (next.js: 6ms, application-code: 33ms)
+✓ Compiled in 1594ms
+ GET /dashboard/settings 200 in 602ms (next.js: 391ms, application-code: 211ms)
+ GET /dashboard/settings 200 in 122ms (next.js: 10ms, application-code: 112ms)
+ GET /dashboard/settings 200 in 45ms (next.js: 4ms, application-code: 41ms)
+✓ Compiled in 183ms
+ GET /dashboard/settings 200 in 269ms (next.js: 107ms, application-code: 162ms)
+ GET /dashboard/settings 200 in 132ms (next.js: 5ms, application-code: 127ms)
+ GET /dashboard/settings 200 in 66ms (next.js: 8ms, application-code: 58ms)
+✓ Finished filesystem cache database compaction in 16.6s
+ GET /dashboard/settings 200 in 308ms (next.js: 68ms, application-code: 240ms)
+ GET /dashboard/settings 200 in 228ms (next.js: 6ms, application-code: 222ms)
+ GET /dashboard/settings 200 in 192ms (next.js: 7ms, application-code: 185ms)
+ GET /dashboard/settings 200 in 192ms (next.js: 71ms, application-code: 121ms)
+ GET /dashboard/settings 200 in 194ms (next.js: 34ms, application-code: 160ms)
+ GET /dashboard/settings 200 in 216ms (next.js: 131ms, application-code: 86ms)
+ GET /dashboard/settings 200 in 161ms (next.js: 5ms, application-code: 156ms)
+ GET /dashboard/settings 200 in 138ms (next.js: 9ms, application-code: 129ms)
+ GET /dashboard/settings 200 in 139ms (next.js: 5ms, application-code: 134ms)
+ GET /dashboard/settings 200 in 139ms (next.js: 48ms, application-code: 91ms)
+ GET /dashboard/settings 200 in 140ms (next.js: 26ms, application-code: 115ms)
+ GET /dashboard/settings 200 in 97ms (next.js: 6ms, application-code: 90ms)
+ GET /dashboard/settings 200 in 174ms (next.js: 5ms, application-code: 169ms)
+ GET /dashboard/settings 200 in 146ms (next.js: 7ms, application-code: 139ms)
+ GET /dashboard/settings 200 in 147ms (next.js: 6ms, application-code: 141ms)
+ GET /dashboard/settings 200 in 201ms (next.js: 27ms, application-code: 174ms)
+ GET /dashboard/settings 200 in 201ms (next.js: 47ms, application-code: 155ms)
+ GET /dashboard/settings 200 in 132ms (next.js: 5ms, application-code: 128ms)
+ GET /dashboard/settings 200 in 233ms (next.js: 6ms, application-code: 227ms)
+ GET /dashboard/settings 200 in 205ms (next.js: 7ms, application-code: 198ms)
+ GET /dashboard/settings 200 in 170ms (next.js: 7ms, application-code: 163ms)
+ GET /dashboard/settings 200 in 170ms (next.js: 41ms, application-code: 129ms)
+ GET /dashboard/settings 200 in 160ms (next.js: 43ms, application-code: 118ms)
+ GET /dashboard/settings 200 in 129ms (next.js: 37ms, application-code: 92ms)
+ GET /dashboard/settings 200 in 186ms (next.js: 6ms, application-code: 180ms)
+ GET /dashboard/settings 200 in 163ms (next.js: 6ms, application-code: 157ms)
+ GET /dashboard/settings 200 in 161ms (next.js: 7ms, application-code: 154ms)
+ GET /dashboard/settings 200 in 129ms (next.js: 7ms, application-code: 123ms)
+ GET /dashboard/settings 200 in 152ms (next.js: 30ms, application-code: 122ms)
+ GET /dashboard/settings 200 in 128ms (next.js: 39ms, application-code: 90ms)
+ GET /dashboard/settings 200 in 165ms (next.js: 5ms, application-code: 160ms)
+ GET /dashboard/settings 200 in 137ms (next.js: 5ms, application-code: 132ms)
+ GET /dashboard/settings 200 in 135ms (next.js: 6ms, application-code: 130ms)
+ GET /dashboard/settings 200 in 133ms (next.js: 6ms, application-code: 128ms)
+ GET /dashboard/settings 200 in 132ms (next.js: 26ms, application-code: 106ms)
+ GET /dashboard/settings 200 in 106ms (next.js: 4ms, application-code: 102ms)
+ GET /dashboard/settings 200 in 156ms (next.js: 5ms, application-code: 152ms)
+ GET /dashboard/settings 200 in 133ms (next.js: 4ms, application-code: 129ms)
+ GET /dashboard/settings 200 in 133ms (next.js: 4ms, application-code: 129ms)
+ GET /dashboard/settings 200 in 113ms (next.js: 5ms, application-code: 108ms)
+ GET /dashboard/settings 200 in 135ms (next.js: 30ms, application-code: 104ms)
+ GET /dashboard/settings 200 in 132ms (next.js: 5ms, application-code: 127ms)
+ GET /dashboard/settings 200 in 186ms (next.js: 4ms, application-code: 182ms)
+ GET /dashboard/settings 200 in 163ms (next.js: 5ms, application-code: 158ms)
+ GET /dashboard/settings 200 in 163ms (next.js: 4ms, application-code: 159ms)
+ GET /dashboard/settings 200 in 164ms (next.js: 26ms, application-code: 138ms)
+ GET /dashboard/settings 200 in 143ms (next.js: 8ms, application-code: 135ms)
+ GET /dashboard/settings 200 in 154ms (next.js: 6ms, application-code: 148ms)
+ GET /dashboard/settings 200 in 169ms (next.js: 5ms, application-code: 165ms)
+ GET /dashboard/settings 200 in 145ms (next.js: 6ms, application-code: 140ms)
+ GET /dashboard/settings 200 in 141ms (next.js: 7ms, application-code: 134ms)
+ GET /dashboard/settings 200 in 140ms (next.js: 38ms, application-code: 102ms)
+ GET /dashboard/settings 200 in 105ms (next.js: 5ms, application-code: 99ms)
+ GET /dashboard/settings 200 in 107ms (next.js: 3ms, application-code: 103ms)
+ GET /dashboard/settings 200 in 164ms (next.js: 5ms, application-code: 159ms)
+ GET /dashboard/settings 200 in 140ms (next.js: 6ms, application-code: 134ms)
+ GET /dashboard/settings 200 in 137ms (next.js: 5ms, application-code: 132ms)
+ GET /dashboard/settings 200 in 139ms (next.js: 29ms, application-code: 111ms)
+ GET /dashboard/settings 200 in 115ms (next.js: 6ms, application-code: 110ms)
+ GET /dashboard/settings 200 in 116ms (next.js: 12ms, application-code: 103ms)
+ GET /dashboard/settings 200 in 155ms (next.js: 4ms, application-code: 151ms)
+ GET /dashboard/settings 200 in 134ms (next.js: 5ms, application-code: 128ms)
+ GET /dashboard/settings 200 in 133ms (next.js: 4ms, application-code: 129ms)
+ GET /dashboard/settings 200 in 130ms (next.js: 5ms, application-code: 125ms)
+ GET /dashboard/settings 200 in 130ms (next.js: 26ms, application-code: 104ms)
+ GET /dashboard/settings 200 in 110ms (next.js: 5ms, application-code: 106ms)
+ GET /dashboard/settings 200 in 105ms (next.js: 4ms, application-code: 100ms)
+ GET /dashboard/settings 200 in 82ms (next.js: 5ms, application-code: 77ms)
+ GET /dashboard/settings 200 in 56ms (next.js: 4ms, application-code: 53ms)
+ GET /dashboard/settings 200 in 34ms (next.js: 5ms, application-code: 29ms)

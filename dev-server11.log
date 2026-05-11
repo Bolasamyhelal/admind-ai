@@ -1,0 +1,40 @@
+
+> admind-ai@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.3:3000
+- Environments: .env
+✓ Ready in 4.4s
+⚠ Slow filesystem detected. The benchmark took 334ms. If D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /dashboard/niche-research ...
+ GET /dashboard/niche-research 200 in 15.5s (next.js: 15.1s, application-code: 360ms)
+ GET /api/auth/me 200 in 1060ms (next.js: 703ms, application-code: 357ms)
+ GET /dashboard/settings 200 in 1143ms (next.js: 1069ms, application-code: 75ms)
+ GET /dashboard/campaign-guide 200 in 1182ms (next.js: 1080ms, application-code: 102ms)
+ POST /api/campaign-guide 200 in 8.5s (next.js: 1416ms, application-code: 7.1s)
+ GET /dashboard/campaign-guide 200 in 60ms (next.js: 24ms, application-code: 36ms)
+ POST /api/campaign-guide 200 in 9.4s (next.js: 375ms, application-code: 9.0s)
+[browser] Uncaught Error: Objects are not valid as a React child (found: object with keys {name, objective, budgetPercent, platform, note}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectTypeImpl (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3922:15)
+    at throwOnInvalidObjectType (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3926:110)
+    at reconcileChildFibersImpl (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4249:17)
+    at <unknown> (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4261:39)
+    at reconcileChildren (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:5898:51)
+    at beginWork (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6758:1573)
+    at runWithFiberInDEV (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at <unknown> (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/src_08xox64._.js:1989:265)
+    at Array.map (<anonymous>)
+    at CampaignGuidePage (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/src_08xox64._.js:1911:38)
+    at ClientPageRoot (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_0kkeklq._.js:4885:50)

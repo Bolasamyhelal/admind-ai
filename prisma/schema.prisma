@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brands     Brand[]
+  clients    Client[]
+  uploads    Upload[]
+  analyses   Analysis[]
+  reports    Report[]
+  alerts     Alert[]
+  creatives  Creative[]
+  chatLogs   ChatLog[]
+  nicheResearch NicheResearch[]
+  campaignGuides CampaignGuide[]
+  clientResearch ClientResearch[]
+  campaignExecs CampaignExecution[]
+  campaignDailyLogs CampaignDailyLog[]
+  sessions   Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  niche     String?
+  country   String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploads  Upload[]
+  analyses Analysis[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  company   String?
+  notes     String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploads  Upload[]
+  analyses Analysis[]
+  reports  Report[]
+}
+
+model Upload {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileSize    Int
+  fileType    String
+  platform    String
+  clientName  String?
+  campaignName String?
+  status      String   @default("pending")
+  userId      String
+  clientId    String?
+  brandId     String?
+  niche       String?
+  country     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client   Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  brand    Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  analyses Analysis[]
+}
+
+model Analysis {
+  id            String   @id @default(cuid())
+  title         String
+  summary       String?
+  insights      String?
+  recommendations String?
+  metrics       String?
+  predictions   String?
+  marketData    String?
+  rawData       String?
+  status        String   @default("completed")
+  userId        String
+  uploadId      String?
+  clientId      String?
+  brandId       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  upload   Upload?    @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+  client   Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  brand    Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  reports  Report[]
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  title      String
+  type       String
+  data       String?
+  format     String   @default("pdf")
+  userId     String
+  clientId   String?
+  analysisId String?
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client   Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  analysis Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  severity  String   @default("info")
+  read      Boolean  @default(false)
+  userId    String
+  analysisId String?
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Creative {
+  id        String   @id @default(cuid())
+  name      String
+  fileData  String?
+  fileType  String?
+  platform  String?
+  notes     String?
+  brandId   String?
+  aiScore   Float?
+  aiAnalysis String?
+  status    String   @default("pending")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CampaignExecution {
+  id          String   @id @default(cuid())
+  name        String
+  clientName  String
+  brand       String?
+  platform    String
+  goal        String
+  currency    String   @default("USD")
+  totalBudget Float
+  dailyBudget Float
+  startDate   String
+  endDate     String
+  status      String   @default("active")
+  notes       String?
+  dailyLogs   CampaignDailyLog[]
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CampaignDailyLog {
+  id           String   @id @default(cuid())
+  date         String
+  spend        Float    @default(0)
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  platform     String?
+  actions      String?
+  notes        String?
+  campaignId   String
+  userId       String
+  createdAt    DateTime @default(now())
+
+  campaign CampaignExecution @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ClientResearch {
+  id        String   @id @default(cuid())
+  market    String
+  service   String
+  budget    String
+  result    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CampaignGuide {
+  id        String   @id @default(cuid())
+  product   String
+  market    String
+  goal      String
+  budget    String
+  platform  String
+  result    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatLog {
+  id        String   @id @default(cuid())
+  role      String
+  content   String
+  userId    String
+  analysisId String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NicheResearch {
+  id        String   @id @default(cuid())
+  niche     String
+  market    String
+  result    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,46 @@
+
+> admind-ai@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.3:3000
+- Environments: .env
+✓ Ready in 5.2s
+⚠ Slow filesystem detected. The benchmark took 414ms. If D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+- Experiments (use with caution):
+  · serverActions
+
+[browser] ./src/app/dashboard/settings/page.tsx:250:10
+the name `AnimatePresence` is defined multiple times
+  248 | }
+  249 |
+> 250 | import { AnimatePresence } from "framer-motion"
+      |          ^^^^^^^^^^^^^^^
+  251 |
+  252 | function ProfileModal({ user, lang, onClose, t }: any) {
+  253 |   const [name, setName] = useState(user?.name || "")
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/app/dashboard/settings/page.tsx [Client Component Browser]
+    ./src/app/dashboard/settings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/dashboard/settings/page.tsx [Client Component SSR]
+    ./src/app/dashboard/settings/page.tsx [Server Component] 
+    at handleErrors (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+    at processMessage (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13914:21)
+    at WebSocket.handleMessage (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13358:52) (file://D:/Claude ai/Chats open code/DATA MB CLIENTS/admind-ai/.next/dev/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13851:21)
+○ Compiling /dashboard/settings ...
+ GET /dashboard/settings 200 in 18.8s (next.js: 18.3s, application-code: 482ms)
+ GET /dashboard/settings 200 in 18.8s (next.js: 18.5s, application-code: 275ms)
+ GET /api/auth/me 200 in 2.7s (next.js: 2.4s, application-code: 269ms)
+ POST /api/auth/update-profile 200 in 750ms (next.js: 424ms, application-code: 326ms)
+✓ Compiled in 358ms
+ GET /dashboard/settings 200 in 184ms (next.js: 109ms, application-code: 76ms)
+✓ Compiled in 226ms
+ GET /dashboard/settings 200 in 138ms (next.js: 96ms, application-code: 41ms)

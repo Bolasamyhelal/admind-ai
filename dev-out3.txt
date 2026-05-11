@@ -1,0 +1,15 @@
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 893ms
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /dashboard/campaign-exec ...
+ GET /dashboard/campaign-exec 200 in 21.4s (next.js: 20.6s, application-code: 851ms)
+ GET /api/auth/me 200 in 1080ms (next.js: 868ms, application-code: 212ms)
+ GET /api/campaign-exec 200 in 1129ms (next.js: 459ms, application-code: 670ms)
+ GET /api/campaign-exec 200 in 18ms (next.js: 4ms, application-code: 14ms)
+ GET /api/campaign-exec 200 in 32ms (next.js: 4ms, application-code: 28ms)
+[?25h

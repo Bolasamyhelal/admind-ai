@@ -1,0 +1,22 @@
+
+> admind-ai@0.1.0 dev
+> next dev --webpack
+
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.3:3000
+- Environments: .env
+✓ Ready in 18.5s
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+  Skipping creating a lockfile at D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\.next\dev\lock because we're using WASM bindings
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /api/analyze-site ...
+Gemini quota/rate limit exceeded
+OpenAI also failed: 429 You exceeded your current quota, please check your plan and billing details. For more informatio
+ POST /api/analyze-site 500 in 23.5s (next.js: 18.0s, application-code: 5.5s)
+  Reload env: .env
+  Reload env: .env
+[?25h

@@ -1,0 +1,47 @@
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 632ms
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /sign-in ...
+ GET /sign-in 200 in 9.2s (next.js: 8.8s, application-code: 407ms)
+ GET /dashboard/campaign-exec 200 in 2.0s (next.js: 1664ms, application-code: 379ms)
+ GET /api/campaign-exec 200 in 1700ms (next.js: 954ms, application-code: 746ms)
+ POST /api/campaign-exec 200 in 319ms (next.js: 3ms, application-code: 315ms)
+ GET / 200 in 2.7s (next.js: 2.5s, application-code: 224ms)
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "192.168.1.3".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['192.168.1.3'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET / 200 in 121ms (next.js: 7ms, application-code: 114ms)
+ GET / 200 in 140ms (next.js: 4ms, application-code: 135ms)
+○ Compiling /dashboard ...
+ GET /dashboard 200 in 7.6s (next.js: 7.4s, application-code: 246ms)
+ GET / 200 in 451ms (next.js: 313ms, application-code: 139ms)
+ GET / 200 in 96ms (next.js: 5ms, application-code: 91ms)
+ GET /sign-in 200 in 163ms (next.js: 51ms, application-code: 112ms)
+ GET / 200 in 165ms (next.js: 73ms, application-code: 92ms)
+ GET / 200 in 124ms (next.js: 4ms, application-code: 120ms)
+ GET / 200 in 282ms (next.js: 63ms, application-code: 220ms)
+ GET / 200 in 424ms (next.js: 304ms, application-code: 120ms)
+ GET / 200 in 127ms (next.js: 7ms, application-code: 120ms)
+ GET / 200 in 92ms (next.js: 5ms, application-code: 87ms)
+ GET /sign-in 200 in 113ms (next.js: 51ms, application-code: 62ms)
+ GET /sign-in 200 in 52ms (next.js: 5ms, application-code: 47ms)
+ GET /sign-in 200 in 59ms (next.js: 5ms, application-code: 54ms)
+ GET /sign-in 200 in 59ms (next.js: 7ms, application-code: 52ms)
+ GET /sign-in 200 in 130ms (next.js: 24ms, application-code: 105ms)
+ GET /sign-in 200 in 87ms (next.js: 19ms, application-code: 69ms)
+ GET /sign-in 200 in 52ms (next.js: 6ms, application-code: 47ms)
+ GET /sign-in 200 in 118ms (next.js: 49ms, application-code: 69ms)
+[?25h

@@ -1,0 +1,54 @@
+
+> admind-ai@0.1.0 dev
+> next dev -H 0.0.0.0
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 5.3s
+⚠ Slow filesystem detected. The benchmark took 224ms. If D:\Claude ai\Chats open code\DATA MB CLIENTS\admind-ai\.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+- Experiments (use with caution):
+  · serverActions
+
+○ Compiling /dashboard/upload ...
+ GET /dashboard/campaign-exec 200 in 4.2s (next.js: 3.8s, application-code: 375ms)
+ GET /dashboard/upload 200 in 18.2s (next.js: 17.3s, application-code: 846ms)
+ GET /api/auth/me 200 in 2.2s (next.js: 783ms, application-code: 1416ms)
+ GET /api/upload?userId=cmozno0i60000aungytuoyysi 200 in 976ms (next.js: 912ms, application-code: 64ms)
+ POST /api/campaign-exec 200 in 733ms (next.js: 359ms, application-code: 374ms)
+ GET /api/campaign-exec 200 in 364ms (next.js: 14ms, application-code: 351ms)
+ POST /api/campaign-exec 500 in 124ms (next.js: 5ms, application-code: 118ms)
+ GET /api/campaign-exec 200 in 13ms (next.js: 4ms, application-code: 10ms)
+ POST /api/campaign-exec 200 in 445ms (next.js: 4ms, application-code: 441ms)
+ GET /dashboard/upload 200 in 405ms (next.js: 332ms, application-code: 73ms)
+ GET /api/auth/me 200 in 13ms (next.js: 4ms, application-code: 8ms)
+ GET /api/upload?userId=cmozno0i60000aungytuoyysi 200 in 33ms (next.js: 6ms, application-code: 27ms)
+ GET /dashboard/campaign-exec 200 in 322ms (next.js: 116ms, application-code: 206ms)
+ GET /api/campaign-exec 200 in 33ms (next.js: 4ms, application-code: 28ms)
+ GET /api/campaign-exec 200 in 33ms (next.js: 4ms, application-code: 29ms)
+ POST /api/campaign-exec 200 in 459ms (next.js: 3ms, application-code: 456ms)
+ GET /api/campaign-exec 200 in 15ms (next.js: 3ms, application-code: 12ms)
+ GET /api/campaign-exec?id=cmp15l47j00075b2fo3u21kfz 200 in 51ms (next.js: 3ms, application-code: 48ms)
+ PUT /api/campaign-exec 200 in 498ms (next.js: 3ms, application-code: 495ms)
+ GET /api/campaign-exec?id=cmp15l47j00075b2fo3u21kfz 200 in 9ms (next.js: 1995µs, application-code: 7ms)
+ PUT /api/campaign-exec 200 in 148ms (next.js: 3ms, application-code: 145ms)
+ GET /api/campaign-exec?id=cmp15l47j00075b2fo3u21kfz 200 in 10ms (next.js: 1832µs, application-code: 9ms)
+ PUT /api/campaign-exec 200 in 134ms (next.js: 2ms, application-code: 132ms)
+ GET /api/campaign-exec?id=cmp15l47j00075b2fo3u21kfz 200 in 12ms (next.js: 3ms, application-code: 9ms)
+ GET /api/campaign-exec?id=cmp15l47j00075b2fo3u21kfz 200 in 18ms (next.js: 3ms, application-code: 16ms)
+✓ Compiled in 1325ms
+ GET /dashboard/campaign-exec 200 in 670ms (next.js: 616ms, application-code: 53ms)
+✓ Compiled in 414ms
+ GET /dashboard/campaign-exec 200 in 151ms (next.js: 112ms, application-code: 39ms)
+✓ Compiled in 127ms
+ GET /dashboard/campaign-exec 200 in 140ms (next.js: 108ms, application-code: 32ms)
+✓ Compiled in 116ms
+ GET /dashboard/campaign-exec 200 in 240ms (next.js: 125ms, application-code: 115ms)
+✓ Compiled in 97ms
+ GET /dashboard/campaign-exec 200 in 143ms (next.js: 100ms, application-code: 43ms)
+✓ Compiled in 100ms
+ GET /dashboard/campaign-exec 200 in 132ms (next.js: 101ms, application-code: 31ms)
+✓ Compiled in 97ms
+ GET /dashboard/campaign-exec 200 in 225ms (next.js: 140ms, application-code: 85ms)
