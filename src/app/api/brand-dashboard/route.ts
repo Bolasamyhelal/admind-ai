@@ -21,38 +21,30 @@ export async function GET(req: NextRequest) {
 
     const brand = await prisma.brand.findFirst({
       where: { id: brandId, userId: user.id },
-      include: {
-        uploads: { orderBy: { createdAt: "desc" }, take: 20 },
-        analyses: { orderBy: { createdAt: "desc" }, take: 20 },
-      },
+      include: { uploads: { orderBy: { createdAt: "desc" }, take: 5 }, analyses: { orderBy: { createdAt: "desc" }, take: 5 } },
     })
     if (!brand) return NextResponse.json({ error: "البراند غير موجود" }, { status: 404 })
 
-    const campaigns = await prisma.campaignExecution.findMany({
-      where: { userId: user.id, brand: brand.name },
-      orderBy: { createdAt: "desc" },
-      include: { dailyLogs: true },
-      take: 30,
-    })
-
-    const creatives = await prisma.creative.findMany({
-      where: { userId: user.id, brandId: brand.id },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-    })
-
-    const alerts = await prisma.alert.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    })
+    const [campaigns, creatives, alerts] = await Promise.all([
+      prisma.campaignExecution.findMany({
+        where: { userId: user.id, brand: brand.name },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        include: { dailyLogs: { orderBy: { date: "desc" }, take: 30 } },
+      }),
+      prisma.creative.findMany({
+        where: { userId: user.id, brandId: brand.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      prisma.alert.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+    ])
 
     const latestAnalysis = brand.analyses[0]
-    const metrics = latestAnalysis?.metrics ? JSON.parse(latestAnalysis.metrics) : null
-    const insights = latestAnalysis?.insights ? JSON.parse(latestAnalysis.insights) : []
-    const recommendations = latestAnalysis?.recommendations ? JSON.parse(latestAnalysis.recommendations) : []
-    const predictions = latestAnalysis?.predictions ? JSON.parse(latestAnalysis.predictions) : []
-    const marketData = latestAnalysis?.marketData ? JSON.parse(latestAnalysis.marketData) : null
 
     const campaignStats = {
       total: campaigns.length,
@@ -64,11 +56,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       brand,
-      metrics,
-      insights,
-      recommendations,
-      predictions,
-      marketData,
+      metrics: latestAnalysis?.metrics ? JSON.parse(latestAnalysis.metrics) : null,
+      insights: latestAnalysis?.insights ? JSON.parse(latestAnalysis.insights) : [],
+      recommendations: latestAnalysis?.recommendations ? JSON.parse(latestAnalysis.recommendations) : [],
+      predictions: latestAnalysis?.predictions ? JSON.parse(latestAnalysis.predictions) : [],
+      marketData: latestAnalysis?.marketData ? JSON.parse(latestAnalysis.marketData) : null,
       campaigns: campaigns.map((c) => ({
         id: c.id, name: c.name, clientName: c.clientName, platform: c.platform,
         goal: c.goal, totalBudget: c.totalBudget, dailyBudget: c.dailyBudget,
