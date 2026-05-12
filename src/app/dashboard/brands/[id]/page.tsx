@@ -10,7 +10,8 @@ import {
   ArrowLeft, Store, Globe, Loader2, TrendingUp, DollarSign, Target,
   BarChart3, Image, Play, Download, ExternalLink, Sparkles,
   Users, Monitor, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
-  Layers, ChevronDown, FileText, Clock, Percent, Activity,
+  Layers, ChevronDown, FileText, Clock, Percent, Activity, X, Info,
+  Lightbulb, AlertTriangle, CheckCircle, TrendingDown,
 } from "lucide-react"
 
 const LEVELS = [
@@ -60,6 +61,199 @@ function getHealthLabel(score: number | null) {
   return "ضعيف"
 }
 
+function getMetricAnalysis(metricKey: string, value: number, formatter: any) {
+  const analysis: { status: string; statusLabel: string; analysis: string; recommendations: string[]; color: string; bg: string } = {
+    status: "neutral", statusLabel: "", analysis: "", recommendations: [], color: "", bg: "",
+  }
+
+  switch (metricKey) {
+    case "spend":
+      if (value > 10000) { analysis.status = "warning"; analysis.statusLabel = "إنفاق مرتفع"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = `إجمالي الإنفاق ${formatter(value)} —这是个 رقم كبير نسبياً. لازم تراقب ROAS عشان تتأكد إن العائد يستحق المصروف.`
+        analysis.recommendations = ["راجع أداء الحملات الأقل في ROAS", "فكر في إعادة توزيع الميزانية على الحملات الأكثر ربحية", "حدد حد أقصى للإنفاق اليومي"] }
+      else if (value < 100) { analysis.status = "info"; analysis.statusLabel = "إنفاق منخفض"; analysis.color = "text-blue-500"; analysis.bg = "bg-blue-50 dark:bg-blue-900/10"
+        analysis.analysis = `إجمالي الإنفاق ${formatter(value)} —إنفاق منخفض. ممكن تحتاج تزود الميزانية عشان توصل لنتائج أفضل.`
+        analysis.recommendations = ["جرب زيادة الميزانية تدريجياً", "اختبر حملات جديدة بميزانية صغيرة", "وسع الاستهداف وزد الجمهور"] }
+      else { analysis.status = "good"; analysis.statusLabel = "إنفاق معتدل"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `إجمالي الإنفاق ${formatter(value)} — مستوى إنفاق مناسب.`
+        analysis.recommendations = ["تابع الأداء باستمرار", "ابحث عن فرص توسع"] }
+      break
+
+    case "revenue":
+      if (value > 5000) { analysis.status = "excellent"; analysis.statusLabel = "إيرادات ممتازة"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `الإيرادات ${formatter(value)} — أداء قوي! الحملات تحقق عائد ممتاز.`
+        analysis.recommendations = ["زود الميزانية على الحملات الناجحة", "وسع نطاق الاستهداف", "جرب إعلانات مشابهة"] }
+      else if (value <= 0) { analysis.status = "critical"; analysis.statusLabel = "بدون إيرادات"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = "الإيرادات صفر أو سلبية — الحملات مش بتحقق مبيعات."
+        analysis.recommendations = ["راجع استهداف الحملات", "حسن الصفحات المقصودة", "اختبر إعلانات جديدة", "تأكد من تتبع التحويلات"] }
+      else { analysis.status = "good"; analysis.statusLabel = "إيرادات جيدة"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `الإيرادات ${formatter(value)} — أداء إيجابي، لكن في فرصة للتحسين.`
+        analysis.recommendations = ["حاول ترفع ROAS", "حسن الاستهداف لزيادة التحويلات", "اختبر عروض جديدة"] }
+      break
+
+    case "roas":
+      if (value >= 2) { analysis.status = "excellent"; analysis.statusLabel = "ممتاز"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `ROAS ${value.toFixed(2)}x — كل 1 جنيه إنفاق بيرجع ${value.toFixed(2)} جنيه. أداء ممتاز!`
+        analysis.recommendations = ["زود الميزانية على الحملات دي", "استخدم نفس الاستراتيجية في حملات جديدة", "وسع الجمهور المستهدف"] }
+      else if (value >= 1) { analysis.status = "warning"; analysis.statusLabel = "محتاج تحسين"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = `ROAS ${value.toFixed(2)}x — العائد ضعيف، كل 1 جنيه بيرجع ${value.toFixed(2)} جنيه بس.`
+        analysis.recommendations = ["حسن استهداف الإعلانات", "طور الصفحات المقصودة", "اختبر إعلانات جديدة", "قلل الإنفاق على الحملات الضعيفة"] }
+      else { analysis.status = "critical"; analysis.statusLabel = "ضعيف"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = `ROAS ${value.toFixed(2)}x — بسمسم في فلوس. كل 1 جنيه إنفاق بيديك أقل من 1 جنيه.`
+        analysis.recommendations = ["أوقف الحملات الخاسرة فوراً", "راجع استراتيجية الإعلانات بالكامل", "حسن الصفحات المقصودة", "جرب تغيير الجمهور المستهدف", "استشر brand mentor"] }
+      break
+
+    case "cpa":
+      if (value <= 0) { analysis.status = "info"; analysis.statusLabel = "غير متوفر"; analysis.color = "text-blue-500"; analysis.bg = "bg-blue-50 dark:bg-blue-900/10"
+        analysis.analysis = "CPA مش متاح — مفيش تحويلات مسجلة."
+        analysis.recommendations = ["تأكد من تتبع التحويلات", "حط بكسل التحويل", "اختبر تحويلات جديدة"] }
+      else if (value <= 100) { analysis.status = "excellent"; analysis.statusLabel = "ممتاز"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `CPA ${formatter(value)} — تكلفة اكتساب العميل منخفضة. كفاءة عالية!`
+        analysis.recommendations = ["استمر في نفس النهج", "زود الميزانية للاستفادة من الكفاءة"] }
+      else if (value <= 500) { analysis.status = "warning"; analysis.statusLabel = "مقبول"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = `CPA ${formatter(value)} — التكلفة مقبولة لكن ممكن تحسن.`
+        analysis.recommendations = ["حسن الاستهداف", "جرب إعلانات مختلفة", "طور الصفحات المقصودة"] }
+      else { analysis.status = "critical"; analysis.statusLabel = "مرتفع"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = `CPA ${formatter(value)} — تكلفة اكتساب العميل عالية أوي.`
+        analysis.recommendations = ["قلل الميزانية على الحملات دي", "حسن الجمهور المستهدف", "جرب إعلانات جديدة", "طور تجربة المستخدم"] }
+      break
+
+    case "ctr":
+      if (value >= 3) { analysis.status = "excellent"; analysis.statusLabel = "ممتاز"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `CTR ${value.toFixed(2)}% — الإعلانات بتجذب ناس كتير. أداء ممتاز!`
+        analysis.recommendations = ["استخدم نفس الصيغة اللي شغالة", "اختبر أشكال إعلانات جديدة", "وسع الجمهور"] }
+      else if (value >= 1) { analysis.status = "good"; analysis.statusLabel = "جيد"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `CTR ${value.toFixed(2)}% — أداء جيد في جذب النقرات.`
+        analysis.recommendations = ["جرب A/B testing للإعلانات", "حسن العناوين والصور"] }
+      else if (value >= 0.5) { analysis.status = "warning"; analysis.statusLabel = "ضعيف"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = `CTR ${value.toFixed(2)}% — الإعلانات مش بتجذب نقرات كتير.`
+        analysis.recommendations = ["جدد تصميم الإعلانات", "حسن العناوين", "جرب صور وفيديوهات جديدة", "غير الجمهور المستهدف"] }
+      else { analysis.status = "critical"; analysis.statusLabel = "حرج"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = `CTR ${value.toFixed(2)}% — نسبة نقر ضعيفة جداً. الإعلانات مش بتجذب الانتباه.`
+        analysis.recommendations = ["أعد تصميم الإعلانات بالكامل", "جرب صيغ إعلانات مختلفة", "حسن العناوين والصور", "فكر في تغيير المنصة"] }
+      break
+
+    case "cpm":
+      if (value <= 20) { analysis.status = "good"; analysis.statusLabel = "منخفض"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `CPM ${formatter(value)} — تكلفة الوصول منخفضة. السوق مش تنافسي.`
+        analysis.recommendations = ["فرصة للتوسع", "زود الميزانية للاستفادة"] }
+      else if (value <= 100) { analysis.status = "warning"; analysis.statusLabel = "متوسط"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = `CPM ${formatter(value)} — تكلفة الوصول متوسطة.`
+        analysis.recommendations = ["راقب المنافسين", "ابحث عن استهداف أرخص"] }
+      else { analysis.status = "critical"; analysis.statusLabel = "مرتفع"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = `CPM ${formatter(value)} — تكلفة وصول عالية. السوق تنافسي أو الجمهور ضيق.`
+        analysis.recommendations = ["وسع الاستهداف", "جرب منصات إعلانية أخرى", "حسن جودة الإعلان"] }
+      break
+
+    case "conversions":
+      if (value > 100) { analysis.status = "excellent"; analysis.statusLabel = "تحويلات ممتازة"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `${value} تحويل — أرقام قوية. الحملات بتسلم!`
+        analysis.recommendations = ["زود الميزانية", "وسع الجمهور", "جرب عروض جديدة"] }
+      else if (value <= 0) { analysis.status = "critical"; analysis.statusLabel = "بدون تحويلات"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = "مفيش تحويلات خالص — الحملات مش بتحقق نتائج."
+        analysis.recommendations = ["تأكد من تركيب بكسل التحويل", "راجع الصفحات المقصودة", "اختبر عروض جديدة", "حسن الاستهداف"] }
+      else { analysis.status = "good"; analysis.statusLabel = "تحويلات جيدة"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `${value} تحويل — بداية جيدة، ممكن تحسن.`
+        analysis.recommendations = ["حسن معدل التحويل", "جرب A/B testing", "طور الصفحات المقصودة"] }
+      break
+
+    case "profit":
+      if (value > 0) { analysis.status = "excellent"; analysis.statusLabel = "أرباح إيجابية"; analysis.color = "text-green-500"; analysis.bg = "bg-green-50 dark:bg-green-900/10"
+        analysis.analysis = `الربح ${formatter(value)} — البراند مربح! استمر في التوسع.`
+        analysis.recommendations = ["زود الميزانية على الحملات المربحة", "ابحث عن أسواق جديدة", "استثمر في توسيع النطاق"] }
+      else if (value === 0) { analysis.status = "info"; analysis.statusLabel = "تعادل"; analysis.color = "text-yellow-500"; analysis.bg = "bg-yellow-50 dark:bg-yellow-900/10"
+        analysis.analysis = "ربح صفر — بتكسر ولا بتكسب. محتاج تحسين."
+        analysis.recommendations = ["قلل المصروفات غير الضرورية", "حسن ROAS", "جرب عروض بأسعار أعلى"] }
+      else { analysis.status = "critical"; analysis.statusLabel = "خسارة"; analysis.color = "text-red-500"; analysis.bg = "bg-red-50 dark:bg-red-900/10"
+        analysis.analysis = `الخسارة ${formatter(Math.abs(value))} — البراند بيخسر فلوس. لازم تتصرف بسرعة.`
+        analysis.recommendations = ["أوقف الحملات الخاسرة", "قلل الميزانية بشكل عام", "حسن استراتيجية التسويق", "استشر brand mentor", "راجع الأسعار والتكاليف"] }
+      break
+
+    default:
+      analysis.status = "info"; analysis.statusLabel = "معلومة"; analysis.color = "text-blue-500"; analysis.bg = "bg-blue-50 dark:bg-blue-900/10"
+      analysis.analysis = "بيانات متاحة للمقارنة والتحليل."
+      analysis.recommendations = ["تابع الأداء بانتظام"]
+  }
+  return analysis
+}
+
+function MetricAnalysisModal({ metric, onClose }: { metric: any; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {metric && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", duration: 0.4 }}
+            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl max-w-lg w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="relative bg-gradient-to-br from-purple-600 to-indigo-700 p-6 text-white">
+              <button onClick={onClose} className="absolute top-4 left-4 p-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-all">
+                <X className="h-4 w-4" />
+              </button>
+              <div className={`inline-flex p-2 rounded-lg ${metric.analysis.bg} mb-2`}>
+                <metric.icon className={`h-5 w-5 ${metric.analysis.color}`} />
+              </div>
+              <p className="text-sm text-purple-200 mb-1">{metric.label}</p>
+              <p className="text-3xl font-bold">{metric.value}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full ${metric.analysis.bg} ${metric.analysis.color} font-medium`}>
+                  {metric.analysis.statusLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Analysis */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="h-4 w-4 text-purple-500" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">تحليل المؤشر</p>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{metric.analysis.analysis}</p>
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">التوصيات</p>
+                </div>
+                <div className="space-y-2">
+                  {metric.analysis.recommendations.map((rec: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
+                      {metric.analysis.status === "excellent" || metric.analysis.status === "good"
+                        ? <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                        : <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                      }
+                      <span className="text-xs text-gray-700 dark:text-gray-300">{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tip */}
+              <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-100 dark:border-purple-800/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  <p className="text-xs font-semibold text-gray-900 dark:text-white">نصيحة</p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  كلما زدت البيانات اللي ترفعها، كلما دقت التحليلات و كانت التوصيات أدق.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  )
+}
+
 export default function BrandDetailPage() {
   const [brand, setBrand] = useState<any>(null)
   const [data, setData] = useState<any>(null)
@@ -74,6 +268,7 @@ export default function BrandDetailPage() {
   const [showAllUploads, setShowAllUploads] = useState(false)
   const [showAllCampaigns, setShowAllCampaigns] = useState(false)
   const [showAllTasks, setShowAllTasks] = useState(false)
+  const [selectedMetric, setSelectedMetric] = useState<any>(null)
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -309,23 +504,30 @@ export default function BrandDetailPage() {
             {metrics ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "إجمالي الإنفاق", value: formatCurrency(metrics.spend, currency), icon: DollarSign, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/10" },
-                  { label: "الإيرادات", value: formatCurrency(metrics.revenue, currency), icon: TrendingUp, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/10" },
-                  { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/10" },
-                  { label: "CPA", value: formatCurrency(metrics.cpa, currency), icon: Target, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/10" },
-                  { label: "CTR", value: `${metrics.ctr.toFixed(2)}%`, icon: Percent, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
-                  { label: "CPM", value: formatCurrency(metrics.cpm, currency), icon: BarChart3, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/10" },
-                  { label: "التحويلات", value: metrics.conversions || 0, icon: Activity, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-900/10" },
-                  { label: "الأرباح", value: formatCurrency(metrics.profit, currency), icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
-                ].map((s) => (
-                  <motion.div key={s.label} whileHover={{ y: -2 }} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-shadow hover:shadow-md">
-                    <div className={`inline-flex p-2 rounded-lg ${s.bg} mb-2`}>
-                      <s.icon className={`h-4 w-4 ${s.color}`} />
-                    </div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{s.value}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
-                  </motion.div>
-                ))}
+                  { key: "spend", label: "إجمالي الإنفاق", value: formatCurrency(metrics.spend, currency), rawValue: metrics.spend, icon: DollarSign, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/10" },
+                  { key: "revenue", label: "الإيرادات", value: formatCurrency(metrics.revenue, currency), rawValue: metrics.revenue, icon: TrendingUp, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/10" },
+                  { key: "roas", label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, rawValue: metrics.roas, icon: Target, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/10" },
+                  { key: "cpa", label: "CPA", value: formatCurrency(metrics.cpa, currency), rawValue: metrics.cpa, icon: Target, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/10" },
+                  { key: "ctr", label: "CTR", value: `${metrics.ctr.toFixed(2)}%`, rawValue: metrics.ctr, icon: Percent, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
+                  { key: "cpm", label: "CPM", value: formatCurrency(metrics.cpm, currency), rawValue: metrics.cpm, icon: BarChart3, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/10" },
+                  { key: "conversions", label: "التحويلات", value: metrics.conversions || 0, rawValue: metrics.conversions, icon: Activity, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-900/10" },
+                  { key: "profit", label: "الأرباح", value: formatCurrency(metrics.profit, currency), rawValue: metrics.profit, icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
+                ].map((s) => {
+                  const analysis = getMetricAnalysis(s.key, s.rawValue, (v: number) => formatCurrency(v, currency))
+                  const cardMetric = { ...s, analysis }
+                  return (
+                    <motion.div key={s.label} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedMetric(cardMetric)}
+                      className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-all hover:shadow-md hover:border-purple-200 dark:hover:border-purple-800 cursor-pointer"
+                    >
+                      <div className={`inline-flex p-2 rounded-lg ${s.bg} mb-2`}>
+                        <s.icon className={`h-4 w-4 ${s.color}`} />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{s.value}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+                    </motion.div>
+                  )
+                })}
               </div>
             ) : (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
@@ -628,6 +830,7 @@ export default function BrandDetailPage() {
           </div>
         </div>
       </motion.div>
+      <MetricAnalysisModal metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
     </DashboardLayout>
   )
 }
