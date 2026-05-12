@@ -40,35 +40,40 @@ export async function POST(req: NextRequest) {
 
     // Step 1: AI onboarding - if questions are provided, answer them
     if (step === "onboard") {
-      const prompt = `أنت مساعد ذكي لجمع معلومات عن براند إعلاني. المستخدم بدأ بإضافة براند اسمه "${name}".
+      const fields = ["التخصص (إيه مجال البراند؟)", "رابط الموقع الإلكتروني (إن وجد)", "مين الجمهور المستهدف؟", "إيه المنصات اللي بتعلن عليها؟", "إيه الميزانية الشهرية للإعلانات؟", "البلد", "إيه أهداف البراند؟"]
+      const answered = Object.keys(answers || {})
+      const remaining = fields.filter(f => !answered.some(a => f.includes(a)))
+      const complete = remaining.length === 0 || answered.length >= 4
 
-الأسئلة السابقة وإجاباتها:
+      let analysis = ""
+      let suggestedNiche = ""
+      let suggestedPlatforms = ""
+      if (Object.keys(answers || {}).length > 0) {
+        const prompt = `حلل هذه المعلومات عن براند اسمه "${name}":
 ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
 
-حسب الإجابات المتوفرة، قرر:
-1. هل المعلومات كافية لإنشاء البراند؟ (نعم/لا)
-2. إذا لا، ما هو السؤال التالي المناسب الذي تريد طرحه؟ (سؤال واحد فقط، مختصر)
-3. قدم تحليل أولي سريع عما تعرفه عن هذا البراند
-
-الرد بهذا التنسيق JSON:
+رد JSON فقط:
 {
-  "complete": true/false,
-  "nextQuestion": "السؤال التالي أو فارغ إذا اكتمل",
-  "analysis": "تحليل أولي للبراند بناء على المعلومات المتاحة",
-  "suggestedNiche": "التخصص المقترح",
+  "analysis": "تحليل سريع من سطرين عن البراند بالعربي",
+  "suggestedNiche": "التخصص المقترح حسب المعلومات",
   "suggestedPlatforms": "المنصات المقترحة"
 }`
-
-      const content = await askAI(prompt, true)
-      const result = JSON.parse(content)
+        try {
+          const content = await askAI(prompt, true)
+          const r = JSON.parse(content)
+          analysis = r.analysis
+          suggestedNiche = r.suggestedNiche
+          suggestedPlatforms = r.suggestedPlatforms
+        } catch {}
+      }
 
       return NextResponse.json({
         success: true,
-        complete: result.complete,
-        nextQuestion: result.nextQuestion || null,
-        analysis: result.analysis,
-        suggestedNiche: result.suggestedNiche,
-        suggestedPlatforms: result.suggestedPlatforms,
+        complete,
+        nextQuestion: complete ? null : remaining[0],
+        analysis,
+        suggestedNiche,
+        suggestedPlatforms,
       })
     }
 

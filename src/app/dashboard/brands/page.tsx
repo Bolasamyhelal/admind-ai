@@ -48,10 +48,16 @@ export default function BrandsPage() {
   }
 
   const sendAnswer = async () => {
-    if (!currentAnswer.trim() || !onboarding || !user) return
-    const newAnswers = { ...answers, [onboarding.nextQuestion || "name"]: currentAnswer }
-    setAnswers(newAnswers)
-    setCurrentAnswer("")
+    if (!onboarding || !user) return
+
+    const hasAnswer = currentAnswer.trim().length > 0
+    const newAnswers = hasAnswer
+      ? { ...answers, [onboarding.nextQuestion || "name"]: currentAnswer }
+      : answers
+    if (hasAnswer) {
+      setAnswers(newAnswers)
+      setCurrentAnswer("")
+    }
     setBusy(true)
 
     if (onboarding.complete) {
@@ -215,10 +221,15 @@ export default function BrandsPage() {
                             <Send className="h-5 w-5" />
                           </button>
                         </div>
+                        <button onClick={() => { setOnboarding({ ...onboarding, complete: true, nextQuestion: null }); setCurrentAnswer(""); }}
+                          className="mt-2 text-xs text-purple-600 hover:text-purple-700"
+                        >
+                          تخطي → إنشاء البراند
+                        </button>
                       </div>
                     )}
 
-                    {onboarding.complete && !onboarding.nextQuestion && (
+                    {!onboarding.nextQuestion && (
                       <div className="text-center py-4">
                         <button onClick={sendAnswer} disabled={busy}
                           className="rounded-xl bg-purple-600 px-6 py-3 text-sm font-medium text-white hover:bg-purple-700"
