@@ -39,7 +39,9 @@ export async function GET(req: NextRequest) {
     const analysisWhere: any = { userId, status: "completed" }
     if (brandId) analysisWhere.brandId = brandId
 
-    const analyses = await prisma.analysis.findMany({ where: analysisWhere, orderBy: { createdAt: "desc" } })
+    const allAnalyses = await prisma.analysis.findMany({ where: analysisWhere, orderBy: { createdAt: "desc" } })
+    // Only use campaign-level or legacy (null level) analyses to avoid triple-counting
+    const analyses = allAnalyses.filter((a: any) => !a.level || a.level === "campaign")
 
     const uploadWhere: any = { userId }
     if (brandId) uploadWhere.brandId = brandId
