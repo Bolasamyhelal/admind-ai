@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 
 const LEVELS = [
-  { key: "all", label: "الكل", icon: Layers },
   { key: "campaign", label: "الحملات", icon: BarChart3 },
   { key: "adset", label: "المجموعات الإعلانية", icon: Layers },
   { key: "ad", label: "الإعلانات", icon: Image },
@@ -26,7 +25,7 @@ export default function BrandDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedCurrency, setSelectedCurrency] = useState("USD")
-  const [selectedLevel, setSelectedLevel] = useState("all")
+  const [selectedLevel, setSelectedLevel] = useState("campaign")
   const [brandTasks, setBrandTasks] = useState<any[]>([])
   const [showQuickTask, setShowQuickTask] = useState(false)
   const [quickTaskTitle, setQuickTaskTitle] = useState("")
@@ -49,6 +48,11 @@ export default function BrandDetailPage() {
     const currencies = [...new Set(data.analyses.map((a: any) => getCurrency(a)))] as string[]
     if (currencies.length > 0 && !currencies.includes(selectedCurrency)) {
       setSelectedCurrency(currencies[0])
+    }
+    const availLevels = ["campaign", "adset", "ad"] as const
+    const firstLevel = availLevels.find(l => data.analyses.some((a: any) => a.level === l))
+    if (firstLevel && selectedLevel !== firstLevel) {
+      setSelectedLevel(firstLevel)
     }
   }, [data])
 
@@ -101,7 +105,7 @@ export default function BrandDetailPage() {
   if (error || !brand) return (<DashboardLayout><div className="text-center py-20"><p className="text-gray-500">{error || "البراند غير موجود"}</p></div></DashboardLayout>)
 
   const analysesList = data?.analyses || []
-  const filteredAnalyses = selectedLevel === "all" ? analysesList : analysesList.filter((a: any) => a.level === selectedLevel)
+  const filteredAnalyses = analysesList.filter((a: any) => a.level === selectedLevel)
 
   const byCurrencyMap: Record<string, any[]> = {}
   for (const a of filteredAnalyses) {
@@ -115,9 +119,8 @@ export default function BrandDetailPage() {
   const currency = activeCur
 
   // Build per-entity breakdown table for selected level
-  const levelAnalyses = selectedLevel !== "all" ? analysesList.filter((a: any) => a.level === selectedLevel) : []
   const entities: any[] = []
-  for (const a of levelAnalyses) {
+  for (const a of filteredAnalyses) {
     if (!a.rawData) continue
     try {
       const rd = JSON.parse(a.rawData)
@@ -225,7 +228,7 @@ export default function BrandDetailPage() {
             <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
               {LEVELS.map((lv) => {
                 const Icon = lv.icon
-                const count = lv.key === "all" ? analysesList.length : analysesList.filter((a: any) => a.level === lv.key).length
+                const count = analysesList.filter((a: any) => a.level === lv.key).length
                 return (
                   <button key={lv.key} onClick={() => setSelectedLevel(lv.key)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
@@ -283,7 +286,7 @@ export default function BrandDetailPage() {
             {entities.length > 0 && (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                  تفاصيل {LEVELS.find(l => l.key === selectedLevel)?.label || ""}
+                  تفاصيل {LEVELS.find(l => l.key === selectedLevel)?.label}
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
