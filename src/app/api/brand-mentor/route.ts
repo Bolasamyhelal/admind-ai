@@ -23,11 +23,27 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: 10,
     })
+
+    // Detect currency from analyses
+    let detectedCurrency = "USD"
+    for (const a of analyses) {
+      if (a.marketData) {
+        try {
+          const md = JSON.parse(a.marketData)
+          if (md.currency) { detectedCurrency = md.currency; break }
+        } catch {}
+      }
+    }
+    const sym = detectedCurrency === "USD" ? "$" : detectedCurrency === "SAR" ? "SAR" : detectedCurrency === "EGP" ? "E£" : detectedCurrency
+
+    // Filter to campaign-level only — exclude adset/ad to avoid triple-counting
+    const campaignAnalyses = analyses.filter((a) => !a.level || a.level === "aggregated" || a.level === "campaign")
+
     // Build brand context
     let metricsSummary = "لا يوجد"
-    if (analyses.length > 0) {
+    if (campaignAnalyses.length > 0) {
       const all: any = { spend: 0, revenue: 0, roas: 0, cpa: 0, ctr: 0, conversions: 0, impressions: 0, clicks: 0, profit: 0, count: 0 }
-      for (const a of analyses) {
+      for (const a of campaignAnalyses) {
         if (!a.metrics) continue
         try {
           const m = JSON.parse(a.metrics)
@@ -41,13 +57,13 @@ export async function POST(req: NextRequest) {
       if (all.count > 0) {
         all.roas /= all.count; all.cpa /= all.count; all.ctr /= all.count
       }
-      metricsSummary = `إجمالي الإنفاق: $${all.spend.toFixed(0)} · الإيرادات: $${all.revenue.toFixed(0)} · ROAS: ${all.roas.toFixed(2)}x · CPA: $${all.cpa.toFixed(2)} · CTR: ${all.ctr.toFixed(2)}% · التحويلات: ${all.conversions} · الأرباح: $${all.profit.toFixed(0)} (من ${all.count} تحليل)`
+      metricsSummary = `إجمالي الإنفاق: ${sym} ${all.spend.toFixed(0)} · الإيرادات: ${sym} ${all.revenue.toFixed(0)} · ROAS: ${all.roas.toFixed(2)}x · CPA: ${sym} ${all.cpa.toFixed(2)} · CTR: ${all.ctr.toFixed(2)}% · التحويلات: ${all.conversions} · الأرباح: ${sym} ${all.profit.toFixed(0)} (من ${all.count} تحليل)`
     }
 
     let campaignsSummary = "لا يوجد"
     if (campaigns.length > 0) {
       campaignsSummary = campaigns.slice(0, 5).map((c) =>
-        `${c.name} (${c.platform}) - ${c.goal} - $${c.totalBudget} ميزانية - ${c.status}`
+        `${c.name} (${c.platform}) - ${c.goal} - ${sym} ${c.totalBudget} ميزانية - ${c.status}`
       ).join(" | ")
     }
 
@@ -74,12 +90,13 @@ export async function POST(req: NextRequest) {
 - التخصص: ${brand.niche || "غير محدد"}
 - الجمهور المستهدف: ${brand.targetAudience || "غير محدد"}
 - المنصات: ${brand.platforms || "غير محدد"}
-- الميزانية الشهرية: ${brand.monthlyBudget ? `$${brand.monthlyBudget}` : "غير محدد"}
+- الميزانية الشهرية: ${brand.monthlyBudget ? `${sym} ${brand.monthlyBudget}` : "غير محدد"}
 - البلد: ${brand.country || "غير محدد"}
 - الأهداف: ${brand.goals || "غير محدد"}
+- العملة: ${detectedCurrency}
 - الموقع: ${websiteInfo}
 
-آخر التحليلات (${analyses.length} تحليل):
+آخر التحليلات (${campaignAnalyses.length} تحليل):
 ${metricsSummary}
 
 الحملات (${campaigns.length}):
