@@ -81,13 +81,17 @@ export default function BrandsPage() {
       return
     }
 
-    const res = await fetch("/api/brands", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, name: onboarding.name, step: "onboard", answers: newAnswers }),
-    })
-    const data = await res.json()
-    setOnboarding({ ...onboarding, ...data })
+    try {
+      const res = await fetch("/api/brands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, name: onboarding.name, step: "onboard", answers: newAnswers }),
+      })
+      const data = await res.json()
+      setOnboarding({ ...onboarding, ...data })
+    } catch (e) {
+      console.error("Onboarding error:", e)
+    }
     setBusy(false)
   }
 

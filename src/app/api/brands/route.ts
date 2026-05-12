@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         const prompt = `أنت خبير استراتيجي في الماركتنج والمبيعات. حلل المعلومات دي لبراند اسمه "${name}":
 ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
 
-رد JSON فقط:
+رد JSON فقط بدون markdown أو أكواد:
 {
   "analysis": "تحليل سريع ومحترف (جملتين) عن وضع البراند وفرصه في السوق بالعربي",
   "suggestedNiche": "التخصص المقترح حسب معلوماته",
@@ -70,12 +70,16 @@ ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
 }`
         try {
           const content = await askAI(prompt, true)
-          const r = JSON.parse(content)
-          analysis = r.analysis
-          suggestedNiche = r.suggestedNiche
-          suggestedPlatforms = r.suggestedPlatforms
-          suggestedMarket = r.suggestedMarket
-        } catch {}
+          // Strip markdown code blocks if present
+          const cleaned = content.replace(/```(?:json)?\s*/gi, "").replace(/\s*```/g, "").trim()
+          const r = JSON.parse(cleaned)
+          analysis = typeof r.analysis === "string" ? r.analysis : ""
+          suggestedNiche = typeof r.suggestedNiche === "string" ? r.suggestedNiche : ""
+          suggestedPlatforms = typeof r.suggestedPlatforms === "string" ? r.suggestedPlatforms : ""
+          suggestedMarket = typeof r.suggestedMarket === "string" ? r.suggestedMarket : ""
+        } catch (e) {
+          console.error("AI parse error:", e)
+        }
       }
 
       return NextResponse.json({
