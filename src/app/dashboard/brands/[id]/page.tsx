@@ -10,7 +10,15 @@ import {
   ArrowLeft, Store, Globe, Loader2, TrendingUp, DollarSign, Target,
   BarChart3, Image, Play, Download, Trash2, ExternalLink, Sparkles, Lightbulb,
   Users, Monitor, Smartphone, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
+  Layers,
 } from "lucide-react"
+
+const LEVELS = [
+  { key: "all", label: "الكل", icon: Layers },
+  { key: "campaign", label: "الحملات", icon: BarChart3 },
+  { key: "adset", label: "المجموعات الإعلانية", icon: Layers },
+  { key: "ad", label: "الإعلانات", icon: Image },
+]
 
 export default function BrandDetailPage() {
   const [brand, setBrand] = useState<any>(null)
@@ -18,6 +26,7 @@ export default function BrandDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedCurrency, setSelectedCurrency] = useState("USD")
+  const [selectedLevel, setSelectedLevel] = useState("all")
   const [brandTasks, setBrandTasks] = useState<any[]>([])
   const [showQuickTask, setShowQuickTask] = useState(false)
   const [quickTaskTitle, setQuickTaskTitle] = useState("")
@@ -43,7 +52,6 @@ export default function BrandDetailPage() {
     }
   }, [data])
 
-  // Fetch tasks for this brand
   useEffect(() => {
     if (!brandId) return
     fetch(`/api/tasks?brandId=${brandId}`)
@@ -93,16 +101,33 @@ export default function BrandDetailPage() {
   if (error || !brand) return (<DashboardLayout><div className="text-center py-20"><p className="text-gray-500">{error || "البراند غير موجود"}</p></div></DashboardLayout>)
 
   const analysesList = data?.analyses || []
+  const filteredAnalyses = selectedLevel === "all" ? analysesList : analysesList.filter((a: any) => a.level === selectedLevel)
+
   const byCurrencyMap: Record<string, any[]> = {}
-  for (const a of analysesList) {
+  for (const a of filteredAnalyses) {
     const cur = getCurrency(a)
     if (!byCurrencyMap[cur]) byCurrencyMap[cur] = []
     byCurrencyMap[cur].push(a)
   }
   const currencies = Object.keys(byCurrencyMap)
   const activeCur = currencies.includes(selectedCurrency) ? selectedCurrency : (currencies[0] || "USD")
-  const metrics = analysesList.length ? calcMetrics(byCurrencyMap[activeCur] || []) : null
+  const metrics = filteredAnalyses.length ? calcMetrics(byCurrencyMap[activeCur] || []) : null
   const currency = activeCur
+
+  // Build per-entity breakdown table for selected level
+  const levelAnalyses = selectedLevel !== "all" ? analysesList.filter((a: any) => a.level === selectedLevel) : []
+  const entities: any[] = []
+  for (const a of levelAnalyses) {
+    if (!a.rawData) continue
+    try {
+      const rd = JSON.parse(a.rawData)
+      if (rd.breakdown) {
+        for (const [name, em] of Object.entries(rd.breakdown)) {
+          entities.push({ name, ...em as any, analysisTitle: a.title })
+        }
+      }
+    } catch {}
+  }
 
   return (
     <DashboardLayout>
@@ -196,6 +221,25 @@ export default function BrandDetailPage() {
               ) : null
             })()}
 
+            {/* Level Tabs */}
+            <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
+              {LEVELS.map((lv) => {
+                const Icon = lv.icon
+                const count = lv.key === "all" ? analysesList.length : analysesList.filter((a: any) => a.level === lv.key).length
+                return (
+                  <button key={lv.key} onClick={() => setSelectedLevel(lv.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      selectedLevel === lv.key ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {lv.label}
+                    <span className="text-[10px] opacity-60">({count})</span>
+                  </button>
+                )
+              })}
+            </div>
+
             {/* Currency Tabs */}
             {currencies.length > 1 && metrics && (
               <div className="flex gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
@@ -232,6 +276,47 @@ export default function BrandDetailPage() {
                     <p className="text-lg font-bold text-gray-900 dark:text-white">{s.value}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Per-Entity Breakdown Table */}
+            {entities.length > 0 && (
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                  تفاصيل {LEVELS.find(l => l.key === selectedLevel)?.label || ""}
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-800">
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الاسم</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الإنفاق</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الإيرادات</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">ROAS</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">المشاهدات</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">نقرات</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">تحويلات</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">CPA</th>
+                        <th className="text-right py-2 px-3 text-gray-500 font-medium">CTR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entities.map((e, i) => (
+                        <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                          <td className="py-2 px-3 text-gray-900 dark:text-white font-medium">{e.name}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.spend, currency)}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.revenue, currency)}</td>
+                          <td className={`py-2 px-3 font-medium ${e.roas >= 2 ? "text-green-600" : e.roas >= 1 ? "text-yellow-600" : "text-red-600"}`}>{e.roas?.toFixed(2)}x</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.impressions || 0).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.clicks || 0).toLocaleString()}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.conversions || 0}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.cpa, currency)}</td>
+                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.ctr?.toFixed(2)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

@@ -124,6 +124,7 @@ model Analysis {
   predictions   String?
   marketData    String?
   rawData       String?
+  level         String   @default("aggregated") // campaign, adset, ad
   status        String   @default("completed")
   userId        String
   uploadId      String?

@@ -9,8 +9,9 @@ import { RecommendationsPanel } from "@/components/analysis/recommendations"
 import { PredictionsPanel } from "@/components/analysis/predictions-panel"
 import { AIChat } from "@/components/chat/ai-chat"
 import { Badge } from "@/components/ui/badge"
+import { formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Loader2, ChevronRight, Download, Share2, Clock, BarChart3, Brain, TrendingUp, Activity } from "lucide-react"
+import { Loader2, ChevronRight, Download, Share2, Clock, BarChart3, Brain, TrendingUp, Activity, Layers, Image } from "lucide-react"
 
 export default function AnalysisPage() {
   const params = useParams()
@@ -52,7 +53,13 @@ export default function AnalysisPage() {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{analysis?.title || "Campaign Analysis"}</h1>
             <div className="flex items-center gap-3 mt-2">
-              <Badge variant="default">{analysis?.rawData?.platform || "Meta Ads"}</Badge>
+              {analysis?.level && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  {analysis.level === "campaign" ? <BarChart3 className="h-3 w-3" /> : analysis.level === "adset" ? <Layers className="h-3 w-3" /> : <Image className="h-3 w-3" />}
+                  {analysis.level === "campaign" ? "تحليل الحملات" : analysis.level === "adset" ? "تحليل المجموعات" : "تحليل الإعلانات"}
+                </Badge>
+              )}
+              <Badge variant="default">{(() => { try { return JSON.parse(analysis.rawData || "{}").platform } catch { return "Meta Ads" } })()}</Badge>
               <span className="text-sm text-gray-500 flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {analysis?.createdAt ? new Date(analysis.createdAt).toLocaleString() : "Just now"}
@@ -114,6 +121,55 @@ export default function AnalysisPage() {
             )}
           </div>
         </div>
+
+        {/* Entity Breakdown */}
+        {analysis?.level && analysis?.rawData && (() => {
+          let rd: any = {}
+          try { rd = JSON.parse(analysis.rawData) } catch {}
+          if (!rd.breakdown) return null
+          const entries = Object.entries(rd.breakdown) as [string, any][]
+          if (!entries.length) return null
+          return (
+            <div className="mb-8 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                تفاصيل {analysis.level === "campaign" ? "الحملات" : analysis.level === "adset" ? "المجموعات الإعلانية" : "الإعلانات"}
+                <span className="text-sm text-gray-400 font-normal mr-2">({entries.length})</span>
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">الاسم</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">الإنفاق</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">الإيرادات</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">ROAS</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">المشاهدات</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">نقرات</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">تحويلات</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">CPA</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">CTR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries.map(([name, e], i) => (
+                      <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                        <td className="py-2 px-3 text-gray-900 dark:text-white font-medium max-w-[200px] truncate">{name}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(() => { try { return formatCurrency(e.spend, JSON.parse(analysis.marketData || "{}").currency) } catch { return e.spend } })()}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(() => { try { return formatCurrency(e.revenue, JSON.parse(analysis.marketData || "{}").currency) } catch { return e.revenue } })()}</td>
+                        <td className={`py-2 px-3 font-medium ${e.roas >= 2 ? "text-green-600" : e.roas >= 1 ? "text-yellow-600" : "text-red-600"}`}>{e.roas?.toFixed(2)}x</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.impressions || 0).toLocaleString()}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.clicks || 0).toLocaleString()}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.conversions || 0}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(() => { try { return formatCurrency(e.cpa, JSON.parse(analysis.marketData || "{}").currency) } catch { return e.cpa } })()}</td>
+                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.ctr?.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )
+        })()}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
           <RecommendationsPanel />
