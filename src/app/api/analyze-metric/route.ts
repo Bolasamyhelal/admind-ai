@@ -1,33 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
-import fs from "fs"
-import path from "path"
+import { askGemini } from "@/lib/ai-helper"
 
-function loadGeminiKey(): string {
-  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "ضع_المفتاح_هنا" && !process.env.GEMINI_API_KEY!.startsWith("sk-...")) {
-    return process.env.GEMINI_API_KEY!
-  }
-  try {
-    const envPath = path.join(process.cwd(), ".env")
-    const content = fs.readFileSync(envPath, "utf8")
-    const match = content.match(/GEMINI_API_KEY=["']?(.+?)["']?(\r?\n|$)/)
-    if (match) {
-      const val = match[1].trim()
-      if (val && val !== "ضع_المفتاح_هنا") return val
-    }
-  } catch {}
-  return ""
-}
-
-async function analyzeWithGemini(prompt: string): Promise<string> {
-  const key = loadGeminiKey()
-  const genAI = new GoogleGenerativeAI(key)
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig: { temperature: 0.7 },
-  })
-  const result = await model.generateContent(prompt)
-  return result.response.text()
+function cleanJsonFromText(text: string): string {
+  const jsonMatch = text.match(/\{[\s\S]*\}/)
+  return jsonMatch ? jsonMatch[0] : text
 }
 
 export async function POST(req: NextRequest) {
@@ -60,11 +36,9 @@ export async function POST(req: NextRequest) {
   "strategicTip": "نصيحة استراتيجية..."
 }`
 
-    const result = await analyzeWithGemini(prompt)
+    const result = await askGemini(prompt)
 
-    // Extract JSON from response
-    const jsonMatch = result.match(/\{[\s\S]*\}/)
-    const jsonStr = jsonMatch ? jsonMatch[0] : result
+    const jsonStr = cleanJsonFromText(result)
     let parsed: any
     try {
       parsed = JSON.parse(jsonStr)

@@ -183,13 +183,48 @@ export async function askAI(prompt: string, jsonMode = true, imageData?: { mimeT
 }
 
 export async function askGemini(prompt: string): Promise<string> {
-  if (!genAI) {
-    throw new Error("GEMINI_API_KEY مش موجود في ملف .env")
+  // Gemini primary
+  if (genAI) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+      })
+      const result = await model.generateContent(prompt)
+      return result.response.text()
+    } catch (err: any) {
+      const msg = err?.message?.toString() || ""
+      console.warn("Gemini failed, trying Groq fallback:", msg.slice(0, 100))
+    }
   }
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    generationConfig: { temperature: 0.8, topK: 1, topP: 0.95, maxOutputTokens: 2048 },
-  })
-  const result = await model.generateContent(prompt)
-  return result.response.text()
+
+  // Groq fallback
+  if (groq) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      })
+      return completion.choices[0]?.message?.content || ""
+    } catch (err: any) {
+      console.warn("Groq fallback also failed:", err?.message?.slice(0, 100))
+    }
+  }
+
+  // OpenAI fallback
+  if (openai) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      })
+      return completion.choices[0]?.message?.content || ""
+    } catch (err: any) {
+      console.warn("OpenAI fallback also failed:", err?.message?.slice(0, 100))
+    }
+  }
+
+  throw new Error("جميع خدمات AI مش متاحة حالياً — تأكد من مفاتيح API")
 }
