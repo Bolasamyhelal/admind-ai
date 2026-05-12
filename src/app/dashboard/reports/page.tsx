@@ -49,9 +49,11 @@ export default function ReportsPage() {
       const daysAgo = period === "weekly" ? 7 : 30
       const cutoff = new Date(now.getTime() - daysAgo * 86400000).toISOString()
 
-      // Filter analyses within period
+      // Filter analyses within period — exclude adset/ad to avoid triple-counting
       const periodAnalyses = (data.analyses || []).filter(
-        (a: any) => new Date(a.createdAt).getTime() >= new Date(cutoff).getTime()
+        (a: any) =>
+          (!a.level || a.level === "aggregated" || a.level === "campaign") &&
+          new Date(a.createdAt).getTime() >= new Date(cutoff).getTime()
       )
       const periodUploads = (data.uploads || []).filter(
         (u: any) => new Date(u.createdAt).getTime() >= new Date(cutoff).getTime()
