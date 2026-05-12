@@ -373,6 +373,10 @@ export default function BrandDetailPage() {
   const [showAllCampaigns, setShowAllCampaigns] = useState(false)
   const [showAllTasks, setShowAllTasks] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<any>(null)
+  const [brandGoals, setBrandGoals] = useState<any[]>([])
+  const [showGoalForm, setShowGoalForm] = useState(false)
+  const [goalForm, setGoalForm] = useState({ metricKey: "roas", metricLabel: "ROAS", targetValue: "", period: "monthly" })
+  const [savingGoal, setSavingGoal] = useState(false)
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -406,6 +410,36 @@ export default function BrandDetailPage() {
       .then((d) => setBrandTasks(d.tasks || []))
       .catch(() => {})
   }, [brandId])
+
+  useEffect(() => {
+    if (!brandId) return
+    fetch(`/api/brand-goals?brandId=${brandId}`)
+      .then((r) => r.json())
+      .then((d) => setBrandGoals(d.goals || []))
+      .catch(() => {})
+  }, [brandId])
+
+  const addGoal = async () => {
+    if (!goalForm.targetValue.trim() || !brandId) return
+    setSavingGoal(true)
+    try {
+      await fetch("/api/brand-goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brandId, ...goalForm, targetValue: parseFloat(goalForm.targetValue) }),
+      })
+      const res = await fetch(`/api/brand-goals?brandId=${brandId}`)
+      const d = await res.json()
+      setBrandGoals(d.goals || [])
+      setGoalForm({ metricKey: "roas", metricLabel: "ROAS", targetValue: "", period: "monthly" })
+      setShowGoalForm(false)
+    } catch {} finally { setSavingGoal(false) }
+  }
+
+  const deleteGoal = async (id: string) => {
+    await fetch(`/api/brand-goals?id=${id}`, { method: "DELETE" })
+    setBrandGoals((prev) => prev.filter((g) => g.id !== id))
+  }
 
   const addQuickTask = async () => {
     if (!quickTaskTitle.trim() || !user || !brandId) return
@@ -640,6 +674,124 @@ export default function BrandDetailPage() {
                 <p className="text-xs text-gray-400 mt-1">ارفع تقارير لعرض المؤشرات</p>
               </div>
             )}
+
+            {/* Brand Goals Section */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-500" />
+                  أهداف البراند
+                  {brandGoals.length > 0 && <span className="text-xs text-gray-400 font-normal">({brandGoals.length})</span>}
+                </h3>
+                <button onClick={() => setShowGoalForm(true)} className="flex items-center gap-1 rounded-lg bg-green-500 hover:bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition-all">
+                  <Plus className="h-3.5 w-3.5" /> إضافة هدف
+                </button>
+              </div>
+              <div className="p-4">
+                {brandGoals.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {brandGoals.map((g) => {
+                      const currentVal = metrics ? (metrics as Record<string, number>)[g.metricKey] ?? 0 : 0
+                      const target = g.targetValue
+                      const progress = target > 0 ? Math.min(Math.round((currentVal / target) * 100), 100) : 0
+                      const achieved = g.metricKey === "cpa" || g.metricKey === "cpm" || g.metricKey === "cpc"
+                        ? currentVal <= target && currentVal > 0
+                        : currentVal >= target
+                      const isNumerical = g.metricKey === "conversions" || g.metricKey === "impressions" || g.metricKey === "clicks"
+                      return (
+                        <div key={g.id} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-medium text-gray-900 dark:text-white">{g.metricLabel}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${achieved ? "bg-green-100 dark:bg-green-900/20 text-green-600" : "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600"}`}>
+                                {achieved ? "تم" : "قيد التنفيذ"}
+                              </span>
+                            </div>
+                            <button onClick={() => deleteGoal(g.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+                            <span>الحالي: {isNumerical ? currentVal : g.metricKey === "roas" ? `${currentVal.toFixed(2)}x` : `${formatCurrency(currentVal, currency)}`}</span>
+                            <span>الهدف: {isNumerical ? target : g.metricKey === "roas" ? `${target}x` : `${formatCurrency(target, currency)}`}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${achieved ? "bg-green-500" : "bg-amber-500"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1">{progress}%</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Target className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">ما حددتش أهداف للبراند</p>
+                    <p className="text-xs text-gray-400 mt-1">حدد أهداف عشان تتابع تقدمك</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Goal Form Modal */}
+            <AnimatePresence>
+              {showGoalForm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowGoalForm(false)}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl max-w-md w-full p-6"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Target className="h-4 w-4 text-green-500" /> إضافة هدف جديد
+                      </h3>
+                      <button onClick={() => setShowGoalForm(false)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">المؤشر</label>
+                        <select value={goalForm.metricKey} onChange={(e) => {
+                          const labels: Record<string, string> = { roas: "ROAS", spend: "إجمالي الإنفاق", revenue: "الإيرادات", cpa: "CPA", ctr: "CTR", cpm: "CPM", conversions: "التحويلات", profit: "الأرباح" }
+                          setGoalForm({ ...goalForm, metricKey: e.target.value, metricLabel: labels[e.target.value] || e.target.value })
+                        }} className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-white">
+                          <option value="roas">ROAS</option>
+                          <option value="spend">إجمالي الإنفاق</option>
+                          <option value="revenue">الإيرادات</option>
+                          <option value="cpa">CPA</option>
+                          <option value="ctr">CTR</option>
+                          <option value="cpm">CPM</option>
+                          <option value="conversions">التحويلات</option>
+                          <option value="profit">الأرباح</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">القيمة المستهدفة</label>
+                        <input value={goalForm.targetValue} onChange={(e) => setGoalForm({ ...goalForm, targetValue: e.target.value })} type="number" step="any" placeholder="مثال: 3" className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-white placeholder:text-gray-400" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1.5">الفترة</label>
+                        <select value={goalForm.period} onChange={(e) => setGoalForm({ ...goalForm, period: e.target.value })} className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-white">
+                          <option value="weekly">أسبوعي</option>
+                          <option value="monthly">شهري</option>
+                          <option value="quarterly">ربع سنوي</option>
+                        </select>
+                      </div>
+                      <button onClick={addGoal} disabled={savingGoal || !goalForm.targetValue.trim()}
+                        className="w-full rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 transition-all"
+                      >
+                        {savingGoal ? "..." : "إضافة الهدف"}
+                      </button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
 
             {/* Breakdown Table */}
             {entities.length > 0 && (
