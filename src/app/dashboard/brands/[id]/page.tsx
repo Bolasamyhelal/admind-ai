@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useAuth } from "@/context/auth-context"
 import { useRouter, useParams } from "next/navigation"
 import { formatCurrency } from "@/lib/utils"
 import {
   ArrowLeft, Store, Globe, Loader2, TrendingUp, DollarSign, Target,
-  BarChart3, Image, Play, Download, Trash2, ExternalLink, Sparkles, Lightbulb,
-  Users, Monitor, Smartphone, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
-  Layers,
+  BarChart3, Image, Play, Download, ExternalLink, Sparkles,
+  Users, Monitor, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
+  Layers, ChevronDown, FileText, Clock, Percent, Activity,
 } from "lucide-react"
 
 const LEVELS = [
@@ -18,6 +18,47 @@ const LEVELS = [
   { key: "adset", label: "المجموعات الإعلانية", icon: Layers },
   { key: "ad", label: "الإعلانات", icon: Image },
 ]
+
+function calcHealthScore(metrics: any) {
+  if (!metrics || !metrics.count) return null
+  let score = 0
+  if (metrics.roas >= 2) score += 40
+  else if (metrics.roas >= 1) score += 20
+  else score += 5
+  if (metrics.profit > 0) score += 30
+  else if (metrics.profit === 0) score += 15
+  else score += 5
+  if (metrics.ctr >= 1) score += 15
+  else if (metrics.ctr >= 0.5) score += 8
+  else score += 3
+  if (metrics.cpa > 0) {
+    if (metrics.cpa <= 50) score += 15
+    else if (metrics.cpa <= 200) score += 10
+    else score += 5
+  }
+  return Math.round(score)
+}
+
+function getHealthColor(score: number | null) {
+  if (score === null) return "text-gray-400"
+  if (score >= 70) return "text-green-500"
+  if (score >= 40) return "text-yellow-500"
+  return "text-red-500"
+}
+
+function getHealthBg(score: number | null) {
+  if (score === null) return "border-gray-300"
+  if (score >= 70) return "border-green-500"
+  if (score >= 40) return "border-yellow-500"
+  return "border-red-500"
+}
+
+function getHealthLabel(score: number | null) {
+  if (score === null) return "—"
+  if (score >= 70) return "ممتاز"
+  if (score >= 40) return "جيد"
+  return "ضعيف"
+}
 
 export default function BrandDetailPage() {
   const [brand, setBrand] = useState<any>(null)
@@ -30,6 +71,9 @@ export default function BrandDetailPage() {
   const [showQuickTask, setShowQuickTask] = useState(false)
   const [quickTaskTitle, setQuickTaskTitle] = useState("")
   const [savingTask, setSavingTask] = useState(false)
+  const [showAllUploads, setShowAllUploads] = useState(false)
+  const [showAllCampaigns, setShowAllCampaigns] = useState(false)
+  const [showAllTasks, setShowAllTasks] = useState(false)
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -117,8 +161,8 @@ export default function BrandDetailPage() {
   const activeCur = currencies.includes(selectedCurrency) ? selectedCurrency : (currencies[0] || "USD")
   const metrics = filteredAnalyses.length ? calcMetrics(byCurrencyMap[activeCur] || []) : null
   const currency = activeCur
+  const healthScore = calcHealthScore(metrics)
 
-  // Build per-entity breakdown table for selected level
   const entities: any[] = []
   for (const a of filteredAnalyses) {
     if (!a.rawData) continue
@@ -132,189 +176,202 @@ export default function BrandDetailPage() {
     } catch {}
   }
 
+  const completedTasks = brandTasks.filter((t: any) => t.status === "completed").length
+  const totalTasks = brandTasks.length
+  const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+  const uploads = data?.uploads || []
+  const campaigns = data?.campaigns || []
+  const displayUploads = showAllUploads ? uploads : uploads.slice(0, 4)
+  const displayCampaigns = showAllCampaigns ? campaigns : campaigns.slice(0, 4)
+  const displayTasks = showAllTasks ? brandTasks : brandTasks.slice(0, 5)
+
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push("/dashboard/brands")} className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/30">
-              <Store className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{brand.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                {brand.niche && <span>{brand.niche}</span>}
-                {brand.country && <><span>·</span><span>{brand.country}</span></>}
-                {brand.platforms && <><span>·</span><span>{brand.platforms}</span></>}
+        {/* Hero Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-700 via-purple-600 to-indigo-700 p-1">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+          <div className="relative rounded-2xl bg-white/10 backdrop-blur-sm p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              {/* Brand Identity */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <button onClick={() => router.push("/dashboard/brands")} className="p-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all">
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <div className="p-2.5 rounded-xl bg-white/15">
+                    <Store className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white">{brand.name}</h1>
+                    <div className="flex items-center gap-2 text-sm text-purple-200">
+                      {brand.niche && <span>{brand.niche}</span>}
+                      {brand.country && <><span>·</span><span>{brand.country}</span></>}
+                      {brand.platforms && <><span>·</span><span>{brand.platforms}</span></>}
+                    </div>
+                  </div>
+                </div>
+                {/* Quick Stats */}
+                <div className="flex flex-wrap gap-4 mt-4">
+                  {metrics && (
+                    <>
+                      <div className="bg-white/10 rounded-lg px-3 py-1.5">
+                        <p className="text-[10px] text-purple-200">ROAS</p>
+                        <p className="text-sm font-bold text-white">{metrics.roas.toFixed(2)}x</p>
+                      </div>
+                      <div className="bg-white/10 rounded-lg px-3 py-1.5">
+                        <p className="text-[10px] text-purple-200">إجمالي الإنفاق</p>
+                        <p className="text-sm font-bold text-white">{formatCurrency(metrics.spend, currency)}</p>
+                      </div>
+                      <div className="bg-white/10 rounded-lg px-3 py-1.5">
+                        <p className="text-[10px] text-purple-200">الأرباح</p>
+                        <p className="text-sm font-bold text-white">{formatCurrency(metrics.profit, currency)}</p>
+                      </div>
+                      <div className="bg-white/10 rounded-lg px-3 py-1.5">
+                        <p className="text-[10px] text-purple-200">التحليلات</p>
+                        <p className="text-sm font-bold text-white">{filteredAnalyses.length}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Health Score */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className={`relative w-20 h-20 rounded-full border-4 ${getHealthBg(healthScore)} flex items-center justify-center bg-white/10`}>
+                  <div className="text-center">
+                    <p className={`text-xl font-bold ${getHealthColor(healthScore)}`}>{healthScore ?? "—"}</p>
+                  </div>
+                </div>
+                <p className={`text-xs mt-1 font-medium ${getHealthColor(healthScore)}`}>
+                  {getHealthLabel(healthScore)}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {brand.website && (
+                  <a href={brand.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 px-3 py-2 text-xs font-medium text-white transition-all">
+                    <ExternalLink className="h-3.5 w-3.5" /> الموقع
+                  </a>
+                )}
+                <button onClick={handleExport} className="flex items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 px-3 py-2 text-xs font-medium text-white transition-all">
+                  <Download className="h-3.5 w-3.5" /> تصدير
+                </button>
               </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            {brand.website && (
-              <a href={brand.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-                <ExternalLink className="h-4 w-4" /> الموقع
-              </a>
-            )}
-            <button onClick={handleExport} className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-              <Download className="h-4 w-4" /> تصدير
-            </button>
           </div>
         </div>
 
-        {/* Brand Info Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Onboarding Data */}
-            <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-gray-900 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                <h3 className="font-semibold text-gray-900 dark:text-white">معلومات البراند</h3>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Left: Main Content (3/4) */}
+          <div className="xl:col-span-3 space-y-6">
+
+            {/* Level Tabs + Currency Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+                {LEVELS.map((lv) => {
+                  const Icon = lv.icon
+                  const count = analysesList.filter((a: any) => a.level === lv.key).length
+                  return (
+                    <button key={lv.key} onClick={() => setSelectedLevel(lv.key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        selectedLevel === lv.key ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {lv.label}
+                      {count > 0 && <span className="text-[10px] opacity-60">({count})</span>}
+                    </button>
+                  )
+                })}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: "الأهداف", value: brand.goals, icon: Target },
-                  { label: "الجمهور المستهدف", value: brand.targetAudience, icon: Users },
-                  { label: "المنصات", value: brand.platforms, icon: Monitor },
-                  { label: "الميزانية الشهرية", value: brand.monthlyBudget ? formatCurrency(brand.monthlyBudget, currency) : null, icon: DollarSign },
-                  { label: "التخصص", value: brand.niche, icon: ShoppingBag },
-                  { label: "البلد", value: brand.country, icon: Globe },
-                ].map((item) => item.value ? (
-                  <div key={item.label} className="flex items-start gap-3 p-3 rounded-lg bg-white dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
-                    <item.icon className="h-5 w-5 text-purple-500 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-400">{item.label}</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.value}</p>
-                    </div>
-                  </div>
-                ) : null)}
-              </div>
-              {brand.notes && (
-                <div className="mt-4 p-3 rounded-lg bg-white dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
-                  <p className="text-xs text-gray-400 mb-1">ملاحظات</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{brand.notes}</p>
+
+              {currencies.length > 1 && (
+                <div className="flex gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+                  {currencies.map((cur) => (
+                    <button key={cur} onClick={() => setSelectedCurrency(cur)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        activeCur === cur ? "bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                      }`}
+                    >
+                      {cur}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Website Analysis */}
-            {brand.websiteAnalysis && (() => {
-              let wa: any = {}
-              try { wa = JSON.parse(brand.websiteAnalysis) } catch {}
-              return wa.title ? (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white">تحليل الموقع</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{wa.title}</p>
-                    {wa.description && <p className="text-sm text-gray-500">{wa.description}</p>}
-                    <div className="flex flex-wrap gap-2">
-                      {wa.tags?.map((t: string, i: number) => (
-                        <span key={i} className="text-xs px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : null
-            })()}
-
-            {/* Level Tabs */}
-            <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
-              {LEVELS.map((lv) => {
-                const Icon = lv.icon
-                const count = analysesList.filter((a: any) => a.level === lv.key).length
-                return (
-                  <button key={lv.key} onClick={() => setSelectedLevel(lv.key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      selectedLevel === lv.key ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {lv.label}
-                    <span className="text-[10px] opacity-60">({count})</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Currency Tabs */}
-            {currencies.length > 1 && metrics && (
-              <div className="flex gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
-                {currencies.map((cur) => (
-                  <button key={cur} onClick={() => setSelectedCurrency(cur)}
-                    className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      activeCur === cur ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    {cur}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Metrics */}
-            {metrics && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* KPI Cards */}
+            {metrics ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "إجمالي الإنفاق", value: formatCurrency(metrics.spend, currency), icon: DollarSign, color: "text-red-500" },
-                  { label: "الإيرادات", value: formatCurrency(metrics.revenue, currency), icon: TrendingUp, color: "text-green-500" },
-                  { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500" },
-                  { label: "CPA", value: formatCurrency(metrics.cpa, currency), icon: Target, color: "text-yellow-500" },
-                  { label: "CTR", value: `${metrics.ctr.toFixed(2)}%`, icon: BarChart3, color: "text-blue-500" },
-                  { label: "CPM", value: formatCurrency(metrics.cpm, currency), icon: BarChart3, color: "text-orange-500" },
-                  { label: "التحويلات", value: metrics.conversions || 0, icon: Target, color: "text-green-500" },
-                  { label: "الأرباح", value: formatCurrency(metrics.profit, currency), icon: DollarSign, color: "text-blue-500" },
+                  { label: "إجمالي الإنفاق", value: formatCurrency(metrics.spend, currency), icon: DollarSign, color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/10" },
+                  { label: "الإيرادات", value: formatCurrency(metrics.revenue, currency), icon: TrendingUp, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/10" },
+                  { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-900/10" },
+                  { label: "CPA", value: formatCurrency(metrics.cpa, currency), icon: Target, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/10" },
+                  { label: "CTR", value: `${metrics.ctr.toFixed(2)}%`, icon: Percent, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
+                  { label: "CPM", value: formatCurrency(metrics.cpm, currency), icon: BarChart3, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/10" },
+                  { label: "التحويلات", value: metrics.conversions || 0, icon: Activity, color: "text-cyan-500", bg: "bg-cyan-50 dark:bg-cyan-900/10" },
+                  { label: "الأرباح", value: formatCurrency(metrics.profit, currency), icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
                 ].map((s) => (
-                  <div key={s.label} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <div className="flex items-center gap-2 mb-1">
+                  <motion.div key={s.label} whileHover={{ y: -2 }} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-shadow hover:shadow-md">
+                    <div className={`inline-flex p-2 rounded-lg ${s.bg} mb-2`}>
                       <s.icon className={`h-4 w-4 ${s.color}`} />
-                      <span className="text-xs text-gray-400">{s.label}</span>
                     </div>
                     <p className="text-lg font-bold text-gray-900 dark:text-white">{s.value}</p>
-                  </div>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+                  </motion.div>
                 ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
+                <BarChart3 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">لا توجد بيانات لهذا المستوى</p>
+                <p className="text-xs text-gray-400 mt-1">ارفع تقارير لعرض المؤشرات</p>
               </div>
             )}
 
-            {/* Per-Entity Breakdown Table */}
+            {/* Breakdown Table */}
             {entities.length > 0 && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                  تفاصيل {LEVELS.find(l => l.key === selectedLevel)?.label}
-                </h3>
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <ListChecks className="h-4 w-4 text-purple-500" />
+                    تفاصيل {LEVELS.find(l => l.key === selectedLevel)?.label}
+                    <span className="text-xs text-gray-400 font-normal">({entities.length})</span>
+                  </h3>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100 dark:border-gray-800">
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الاسم</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الإنفاق</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">الإيرادات</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">ROAS</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">المشاهدات</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">نقرات</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">تحويلات</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">CPA</th>
-                        <th className="text-right py-2 px-3 text-gray-500 font-medium">CTR</th>
+                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">الاسم</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">الإنفاق</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">الإيرادات</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">ROAS</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">المشاهدات</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">نقرات</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">تحويلات</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">CPA</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium text-xs">CTR</th>
                       </tr>
                     </thead>
                     <tbody>
                       {entities.map((e, i) => (
-                        <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                          <td className="py-2 px-3 text-gray-900 dark:text-white font-medium">{e.name}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.spend, currency)}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.revenue, currency)}</td>
-                          <td className={`py-2 px-3 font-medium ${e.roas >= 2 ? "text-green-600" : e.roas >= 1 ? "text-yellow-600" : "text-red-600"}`}>{e.roas?.toFixed(2)}x</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.impressions || 0).toLocaleString()}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{(e.clicks || 0).toLocaleString()}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.conversions || 0}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{formatCurrency(e.cpa, currency)}</td>
-                          <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{e.ctr?.toFixed(2)}%</td>
+                        <tr key={i} className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                          <td className="py-3 px-4 text-gray-900 dark:text-white font-medium">{e.name}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatCurrency(e.spend, currency)}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatCurrency(e.revenue, currency)}</td>
+                          <td className={`py-3 px-4 font-medium ${e.roas >= 2 ? "text-green-600" : e.roas >= 1 ? "text-yellow-600" : "text-red-600"}`}>{e.roas?.toFixed(2)}x</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{(e.impressions || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{(e.clicks || 0).toLocaleString()}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{e.conversions || 0}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{formatCurrency(e.cpa, currency)}</td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{e.ctr?.toFixed(2)}%</td>
                         </tr>
                       ))}
                     </tbody>
@@ -322,79 +379,252 @@ export default function BrandDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Uploads Section */}
+            {uploads.length > 0 && (
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-amber-500" />
+                    التقارير المرفوعة
+                    <span className="text-xs text-gray-400 font-normal">({uploads.length})</span>
+                  </h3>
+                  {uploads.length > 4 && (
+                    <button onClick={() => setShowAllUploads(!showAllUploads)} className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1">
+                      {showAllUploads ? "عرض أقل" : "عرض الكل"}
+                      <ChevronDown className={`h-3 w-3 transition-transform ${showAllUploads ? "rotate-180" : ""}`} />
+                    </button>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {displayUploads.map((u: any) => (
+                      <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+                        <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                          <FileText className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{u.fileName}</p>
+                          <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Clock className="h-3 w-3" />
+                            {new Date(u.createdAt).toLocaleDateString("ar-EG")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Campaigns Section */}
+            {campaigns.length > 0 && (
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Play className="h-4 w-4 text-blue-500" />
+                    الحملات
+                    <span className="text-xs text-gray-400 font-normal">({campaigns.length})</span>
+                  </h3>
+                  {campaigns.length > 4 && (
+                    <button onClick={() => setShowAllCampaigns(!showAllCampaigns)} className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1">
+                      {showAllCampaigns ? "عرض أقل" : "عرض الكل"}
+                      <ChevronDown className={`h-3 w-3 transition-transform ${showAllCampaigns ? "rotate-180" : ""}`} />
+                    </button>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {displayCampaigns.map((c: any) => (
+                      <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+                        <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                          <Play className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
+                          <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
+                            {c.platform && <span>{c.platform}</span>}
+                            {c.goal && <><span>·</span><span>{c.goal}</span></>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Brand Info + Website Analysis */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  معلومات و تحليلات البراند
+                </h3>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "الأهداف", value: brand.goals, icon: Target },
+                    { label: "الجمهور المستهدف", value: brand.targetAudience, icon: Users },
+                    { label: "المنصات", value: brand.platforms, icon: Monitor },
+                    { label: "الميزانية الشهرية", value: brand.monthlyBudget ? formatCurrency(brand.monthlyBudget, currency) : null, icon: DollarSign },
+                    { label: "التخصص", value: brand.niche, icon: ShoppingBag },
+                    { label: "البلد", value: brand.country, icon: Globe },
+                  ].map((item) => item.value ? (
+                    <div key={item.label} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <item.icon className="h-3 w-3 text-purple-500" />
+                        <span className="text-[10px] text-gray-400">{item.label}</span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.value}</p>
+                    </div>
+                  ) : null)}
+                </div>
+                {brand.notes && (
+                  <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
+                    <p className="text-[10px] text-gray-400 mb-1">ملاحظات</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{brand.notes}</p>
+                  </div>
+                )}
+                {brand.websiteAnalysis && (() => {
+                  let wa: any = {}
+                  try { wa = JSON.parse(brand.websiteAnalysis) } catch {}
+                  return wa.title ? (
+                    <div className="mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Globe className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-xs font-medium text-gray-900 dark:text-white">تحليل الموقع</span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">{wa.title}</p>
+                      {wa.description && <p className="text-xs text-gray-500 mb-2">{wa.description}</p>}
+                      {wa.tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {wa.tags.map((t: string, i: number) => (
+                            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">{t}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null
+                })()}
+              </div>
+            </div>
           </div>
 
-          {/* Sidebar */}
+          {/* Right: Sidebar (1/4) */}
           <div className="space-y-4">
-            {data.uploads?.length > 0 && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">التقارير المرفوعة</h3>
-                <div className="space-y-2">
-                  {data.uploads.slice(0, 5).map((u: any) => (
-                    <div key={u.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30 text-xs text-gray-500">
-                      <BarChart3 className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{u.fileName}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {data.campaigns?.length > 0 && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">الحملات</h3>
-                <div className="space-y-2">
-                  {data.campaigns.slice(0, 5).map((c: any) => (
-                    <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30 text-xs text-gray-500">
-                      <Play className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{c.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tasks */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">المهام</h3>
-                <button onClick={() => setShowQuickTask(true)} className="text-purple-600 hover:text-purple-700 p-1">
+            {/* Tasks Card */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
+                  <ListChecks className="h-4 w-4 text-green-500" />
+                  المهام
+                </h3>
+                <button onClick={() => setShowQuickTask(true)} className="text-purple-600 hover:text-purple-700 p-1 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              {showQuickTask && (
-                <div className="mb-3 flex gap-2">
-                  <input value={quickTaskTitle} onChange={(e) => setQuickTaskTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addQuickTask()}
-                    placeholder="مهمة جديدة..."
-                    className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-900 dark:text-white placeholder:text-gray-400"
-                    autoFocus
-                  />
-                  <button onClick={addQuickTask} disabled={savingTask || !quickTaskTitle.trim()}
-                    className="px-3 rounded-lg bg-purple-600 text-xs text-white font-medium hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {savingTask ? "..." : "إضافة"}
+
+              {/* Task Progress Bar */}
+              {totalTasks > 0 && (
+                <div className="px-4 pt-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-gray-400">التقدم</span>
+                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">{completedTasks}/{totalTasks}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${taskProgress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4">
+                {showQuickTask && (
+                  <div className="mb-3 flex gap-2">
+                    <input value={quickTaskTitle} onChange={(e) => setQuickTaskTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addQuickTask()}
+                      placeholder="مهمة جديدة..."
+                      className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-900 dark:text-white placeholder:text-gray-400"
+                      autoFocus
+                    />
+                    <button onClick={addQuickTask} disabled={savingTask || !quickTaskTitle.trim()}
+                      className="px-3 rounded-lg bg-purple-600 text-xs text-white font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    >
+                      {savingTask ? "..." : "إضافة"}
+                    </button>
+                  </div>
+                )}
+                {displayTasks.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {displayTasks.map((t: any) => (
+                      <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                        <button onClick={() => toggleTaskStatus(t)} className="shrink-0">
+                          {t.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600" />}
+                        </button>
+                        <span className={`flex-1 text-xs truncate ${t.status === "completed" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"}`}>
+                          {t.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 text-center py-6">لا توجد مهام</p>
+                )}
+
+                {brandTasks.length > 5 && (
+                  <button onClick={() => setShowAllTasks(!showAllTasks)} className="w-full mt-2 text-xs text-purple-600 hover:text-purple-700 flex items-center justify-center gap-1 py-1">
+                    {showAllTasks ? "عرض أقل" : `عرض الكل (${brandTasks.length})`}
+                    <ChevronDown className={`h-3 w-3 transition-transform ${showAllTasks ? "rotate-180" : ""}`} />
                   </button>
-                </div>
-              )}
-              {brandTasks.length > 0 ? (
-                <div className="space-y-1.5">
-                  {brandTasks.slice(0, 5).map((t: any) => (
-                    <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30 text-xs">
-                      <button onClick={() => toggleTaskStatus(t)} className="shrink-0">
-                        {t.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600" />}
-                      </button>
-                      <span className={`flex-1 truncate ${t.status === "completed" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"}`}>
-                        {t.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-gray-400 text-center py-3">لا توجد مهام</p>
-              )}
+                )}
+              </div>
             </div>
 
+            {/* Quick Summary Card */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-purple-500" />
+                ملخص سريع
+              </h3>
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">إجمالي التحليلات</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">{analysesList.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">المهام المنجزة</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">{completedTasks}/{totalTasks}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">التقارير المرفوعة</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">{uploads.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">الحملات</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">{campaigns.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400">العملات</span>
+                  <span className="text-xs font-medium text-gray-900 dark:text-white">{currencies.join(" / ") || "USD"}</span>
+                </div>
+                {metrics && (
+                  <>
+                    <div className="border-t border-gray-100 dark:border-gray-800 pt-2 mt-2" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-400">ROAS</span>
+                      <span className={`text-xs font-bold ${metrics.roas >= 2 ? "text-green-500" : metrics.roas >= 1 ? "text-yellow-500" : "text-red-500"}`}>
+                        {metrics.roas.toFixed(2)}x
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-400">الصحة</span>
+                      <span className={`text-xs font-bold ${getHealthColor(healthScore)}`}>{getHealthLabel(healthScore)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
