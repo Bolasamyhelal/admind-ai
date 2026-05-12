@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface FileUploaderProps {
-  onUpload: (file: File, platform: string, niche: string, country: string, currency: string) => void
+  onUpload: (file: File, platform: string, niche: string, country: string, currency: string, level: string) => void
   platform: string
   disabled?: boolean
 }
+
+const LEVELS = [
+  { value: "campaign", label: "الحملات (Campaign)" },
+  { value: "adset", label: "المجموعات الإعلانية (Ad Set)" },
+  { value: "ad", label: "الإعلانات (Ad)" },
+]
 
 const niches = [
   "e-commerce",
@@ -58,6 +64,7 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
   const [niche, setNiche] = useState("")
   const [country, setCountry] = useState("")
   const [currency, setCurrency] = useState("USD")
+  const [level, setLevel] = useState("campaign")
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -85,6 +92,7 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
     setNiche("")
     setCountry("")
     setCurrency("USD")
+    setLevel("campaign")
   }
 
   return (
@@ -178,6 +186,20 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
                   </select>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">المستوى</label>
+                  <select
+                    dir="rtl"
+                    className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    value={level}
+                    onChange={(e) => setLevel(e.target.value)}
+                    disabled={disabled}
+                  >
+                    {LEVELS.map((l) => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">العملة</label>
                   <select
                     dir="rtl"
@@ -195,7 +217,7 @@ export function FileUploader({ onUpload, platform, disabled }: FileUploaderProps
 
               <div className="flex gap-3 mt-6">
                 <Button
-                  onClick={() => onUpload(file, platform, niche, country, currency)}
+                  onClick={() => onUpload(file, platform, niche, country, currency, level)}
                   disabled={disabled || !niche || !country}
                 >
                   {disabled ? "جاري الرفع والتحليل..." : "رفع وتحليل"}

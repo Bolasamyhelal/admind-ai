@@ -49,7 +49,7 @@ export default function UploadPage() {
     } catch {}
   }
 
-  const handleUpload = async (file: File, platform: string, niche: string, country: string, currency: string = "USD", brandId?: string) => {
+  const handleUpload = async (file: File, platform: string, niche: string, country: string, currency: string = "USD", level: string = "campaign", brandId?: string) => {
     if (!user) { setError("Please sign in first"); return }
     setError("")
     setUploading(true)
@@ -62,6 +62,7 @@ export default function UploadPage() {
       formData.append("niche", niche)
       formData.append("country", country)
       formData.append("currency", currency)
+      formData.append("level", level)
       formData.append("clientName", "")
       formData.append("campaignName", "")
       if (brandId) formData.append("brandId", brandId)
@@ -138,7 +139,7 @@ export default function UploadPage() {
                 {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
-            <FileUploader onUpload={(file, platform, niche, country, currency) => handleUpload(file, platform, niche, country, currency, selectedBrandId || undefined)} platform={selectedPlatform} disabled={uploading} />
+            <FileUploader onUpload={(file, platform, niche, country, currency, level) => handleUpload(file, platform, niche, country, currency, level, selectedBrandId || undefined)} platform={selectedPlatform} disabled={uploading} />
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">سجل الرفع</h3>
@@ -161,6 +162,14 @@ export default function UploadPage() {
                           <span className="capitalize">{item.platform}</span>
                           <span>·</span>
                           <span>{item.fileType}</span>
+                          {item.analyses?.[0]?.level && (
+                            <>
+                              <span>·</span>
+                              <span className="text-purple-500">
+                                {item.analyses[0].level === "campaign" ? "حملات" : item.analyses[0].level === "adset" ? "مجموعات" : "إعلانات"}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

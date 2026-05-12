@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
     const niche = (formData.get("niche") as string) || ""
     const country = (formData.get("country") as string) || ""
     const currency = (formData.get("currency") as string) || "USD"
+    const level = (formData.get("level") as string) || "campaign"
     const brandId = (formData.get("brandId") as string) || null
 
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 })
@@ -137,18 +138,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    const analyses: any[] = []
+    let analysis: any = null
 
     if (rows.length > 0 && parsedMetrics) {
-      // Create 3 levels of analysis
-      const campaignAnalysis = await createLevelAnalysis(rows, "campaign", platform, currency, userId, upload.id, brandId, file.name)
-      if (campaignAnalysis) analyses.push(campaignAnalysis)
-
-      const adsetAnalysis = await createLevelAnalysis(rows, "adset", platform, currency, userId, upload.id, brandId, file.name)
-      if (adsetAnalysis) analyses.push(adsetAnalysis)
-
-      const adAnalysis = await createLevelAnalysis(rows, "ad", platform, currency, userId, upload.id, brandId, file.name)
-      if (adAnalysis) analyses.push(adAnalysis)
+      analysis = await createLevelAnalysis(rows, level, platform, currency, userId, upload.id, brandId, file.name)
 
       await prisma.upload.update({
         where: { id: upload.id },
@@ -161,9 +154,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       uploadId: upload.id,
-      analyses: analyses.map(a => ({ id: a.id, level: a.level, title: a.title })),
+      analysisId: analysis?.id || null,
       parsedMetrics,
-      message: analyses.length > 0 ? `تم إنشاء ${analyses.length} تحليل` : "File uploaded (no parseable data)",
+      message: analysis ? `تم إنشاء تحليل ${level === "campaign" ? "الحملات" : level === "adset" ? "المجموعات الإعلانية" : "الإعلانات"}` : "File uploaded (no parseable data)",
     })
   } catch (error) {
     console.error("Upload error:", error)
