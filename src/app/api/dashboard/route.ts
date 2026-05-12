@@ -40,8 +40,16 @@ export async function GET(req: NextRequest) {
     if (brandId) analysisWhere.brandId = brandId
 
     const allAnalyses = await prisma.analysis.findMany({ where: analysisWhere, orderBy: { createdAt: "desc" } })
-    // Only use campaign-level or legacy (null level) analyses to avoid triple-counting
-    const analyses = allAnalyses.filter((a: any) => !a.level || a.level === "campaign")
+    // Only use campaign-level or legacy (aggregated/null level) analyses to avoid triple-counting
+    const analyses = allAnalyses.filter((a: any) => {
+      const lv = a.level
+      // Old analyses (before multi-level feature): level = "aggregated" or null/undefined → include
+      if (!lv || lv === "aggregated") return true
+      // New campaign-level analyses → include
+      if (lv === "campaign") return true
+      // adset, ad → skip to avoid triple-counting
+      return false
+    })
 
     const uploadWhere: any = { userId }
     if (brandId) uploadWhere.brandId = brandId
