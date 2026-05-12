@@ -24,6 +24,8 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [history, setHistory] = useState<any[]>([])
   const [error, setError] = useState("")
+  const [brands, setBrands] = useState<any[]>([])
+  const [selectedBrandId, setSelectedBrandId] = useState("")
   const { user } = useAuth()
   const router = useRouter()
 
@@ -31,6 +33,9 @@ export default function UploadPage() {
     if (user) {
       fetch(`/api/upload?userId=${user.id}`).then(r => r.json()).then(d => {
         if (d.uploads) setHistory(d.uploads)
+      }).catch(() => {})
+      fetch(`/api/brands?userId=${user.id}`).then(r => r.json()).then(d => {
+        if (d.brands) setBrands(d.brands)
       }).catch(() => {})
     }
   }, [user])
@@ -44,7 +49,7 @@ export default function UploadPage() {
     } catch {}
   }
 
-  const handleUpload = async (file: File, platform: string, niche: string, country: string, currency: string = "USD") => {
+  const handleUpload = async (file: File, platform: string, niche: string, country: string, currency: string = "USD", brandId?: string) => {
     if (!user) { setError("Please sign in first"); return }
     setError("")
     setUploading(true)
@@ -59,12 +64,15 @@ export default function UploadPage() {
       formData.append("currency", currency)
       formData.append("clientName", "")
       formData.append("campaignName", "")
+      if (brandId) formData.append("brandId", brandId)
 
       const uploadRes = await fetch("/api/upload", { method: "POST", body: formData })
       const uploadData = await uploadRes.json()
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed")
 
-      if (uploadData.analysisId) {
+      if (brandId) {
+        router.push(`/dashboard/brands/${brandId}`)
+      } else if (uploadData.analysisId) {
         router.push(`/dashboard/analysis/${uploadData.analysisId}`)
       } else {
         router.push("/dashboard")
@@ -121,7 +129,16 @@ export default function UploadPage() {
                 جاري الرفع والتحليل... الذكاء الاصطناعي يعالج بيانات حملتك
               </div>
             )}
-            <FileUploader onUpload={handleUpload} platform={selectedPlatform} disabled={uploading} />
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">البراند (اختياري)</label>
+              <select value={selectedBrandId} onChange={(e) => setSelectedBrandId(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500"
+              >
+                <option value="">بدون براند</option>
+                {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </div>
+            <FileUploader onUpload={(file, platform, niche, country, currency) => handleUpload(file, platform, niche, country, currency, selectedBrandId || undefined)} platform={selectedPlatform} disabled={uploading} />
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">سجل الرفع</h3>
