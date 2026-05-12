@@ -179,5 +179,17 @@ export async function askAI(prompt: string, jsonMode = true, imageData?: { mimeT
   const hasOpenAI = !!openaiApiKey
   if (hasGroq) throw new Error("Groq API فشل. تأكد من GROQ_API_KEY في .env")
   if (hasGemini && !hasOpenAI) throw new Error("Gemini quota/rate limit. جرب تضيف GROQ_API_KEY مجاني من console.groq.com")
-  throw new Error("مفتاح API غير موجود - افتح ملف .env وحط GROQ_API_KEY (مجاني) أو GEMINI_API_KEY أو OPENAI_API_KEY")
+  throw new Error("مفتاح API غير موجود - افتح ملف .env وحط GEMINI_API_KEY أو OPENAI_API_KEY")
+}
+
+export async function askGemini(prompt: string): Promise<string> {
+  if (!genAI) {
+    throw new Error("GEMINI_API_KEY مش موجود في ملف .env")
+  }
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig: { temperature: 0.8, topK: 1, topP: 0.95, maxOutputTokens: 2048 },
+  })
+  const result = await model.generateContent(prompt)
+  return result.response.text()
 }

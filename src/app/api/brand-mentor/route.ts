@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { askAI } from "@/lib/ai-helper"
+import { askGemini } from "@/lib/ai-helper"
 
 export async function POST(req: NextRequest) {
   try {
@@ -121,7 +121,7 @@ ${brandContext}
 
     // Use askAI but with text format (not json) for natural conversation
     const fullPrompt = `${systemPrompt}\n\n${messages.map((m) => `${m.role === "user" ? "المستخدم" : "المرشد"}: ${m.content}`).join("\n")}\n\nالمرشد:`
-    const aiResponse = await askAI(fullPrompt, false) // false = text mode, not JSON
+    const aiResponse = await askGemini(fullPrompt)
 
     return NextResponse.json({ response: aiResponse })
   } catch (error: any) {
