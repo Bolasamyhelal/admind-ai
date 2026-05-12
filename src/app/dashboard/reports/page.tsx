@@ -83,7 +83,7 @@ export default function ReportsPage() {
         analyses: periodAnalyses,
         uploads: periodUploads,
         campaigns: data.campaigns || [],
-        creatives: data.creatives || [],
+        creatives: [],
         perCurrency,
         currencies: availableCurs,
         generatedAt: now.toISOString(),

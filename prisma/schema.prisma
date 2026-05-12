@@ -22,7 +22,6 @@ model User {
   analyses   Analysis[]
   reports    Report[]
   alerts     Alert[]
-  creatives  Creative[]
   chatLogs   ChatLog[]
   nicheResearch NicheResearch[]
   campaignGuides CampaignGuide[]
@@ -65,7 +64,6 @@ model Brand {
   user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   uploads  Upload[]
   analyses Analysis[]
-  creatives Creative[]
   campaignExecs CampaignExecution[] @relation("brandCampaigns")
   tasks        Task[]
 
@@ -173,28 +171,6 @@ model Alert {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-}
-
-model Creative {
-  id        String   @id @default(cuid())
-  name      String
-  fileData  String?
-  fileType  String?
-  platform  String?
-  notes     String?
-  brandId   String?
-  aiScore   Float?
-  aiAnalysis String?
-  status    String   @default("pending")
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([brandId])
 }
 
 model CampaignExecution {

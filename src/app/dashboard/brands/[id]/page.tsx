@@ -395,22 +395,6 @@ export default function BrandDetailPage() {
               )}
             </div>
 
-            {data.creatives?.length > 0 && (
-              <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">الكريتفز</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {data.creatives.slice(0, 6).map((c: any) => (
-                    <div key={c.id} className="aspect-square rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                      {c.fileData?.startsWith("data:image/") ? (
-                        <img src={c.fileData} alt={c.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="flex items-center justify-center h-full"><Image className="h-5 w-5 text-gray-300" /></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </motion.div>

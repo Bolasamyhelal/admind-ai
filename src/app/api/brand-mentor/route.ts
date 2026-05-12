@@ -23,12 +23,6 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: 10,
     })
-    const creatives = await prisma.creative.findMany({
-      where: { brandId, userId, status: "analyzed" },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    })
-
     // Build brand context
     let metricsSummary = "لا يوجد"
     if (analyses.length > 0) {
@@ -55,12 +49,6 @@ export async function POST(req: NextRequest) {
       campaignsSummary = campaigns.slice(0, 5).map((c) =>
         `${c.name} (${c.platform}) - ${c.goal} - $${c.totalBudget} ميزانية - ${c.status}`
       ).join(" | ")
-    }
-
-    let creativesSummary = "لا يوجد"
-    if (creatives.length > 0) {
-      const avgScore = creatives.reduce((s, c) => s + (c.aiScore || 0), 0) / creatives.length
-      creativesSummary = `${creatives.length} كريتف · متوسط التقييم ${avgScore.toFixed(1)}/10`
     }
 
     let websiteInfo = "لا يوجد"
@@ -96,9 +84,6 @@ ${metricsSummary}
 
 الحملات (${campaigns.length}):
 ${campaignsSummary}
-
-الكريتفز:
-${creativesSummary}
 
 المهام المعلقة:
 ${tasksSummary}`

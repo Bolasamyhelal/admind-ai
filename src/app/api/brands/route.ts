@@ -16,10 +16,9 @@ export async function GET(req: NextRequest) {
 
       const uploads = await prisma.upload.findMany({ where: { brandId: id }, orderBy: { createdAt: "desc" }, take: 10 })
       const analyses = await prisma.analysis.findMany({ where: { brandId: id }, orderBy: { createdAt: "desc" }, take: 10 })
-      const creatives = await prisma.creative.findMany({ where: { brandId: id }, orderBy: { createdAt: "desc" }, take: 20 })
       const campaigns = await prisma.campaignExecution.findMany({ where: { brandId: id }, orderBy: { createdAt: "desc" } })
 
-      return NextResponse.json({ brand, uploads, analyses, creatives, campaigns })
+      return NextResponse.json({ brand, uploads, analyses, campaigns })
     }
 
     const brands = await prisma.brand.findMany({ where: { userId }, orderBy: { createdAt: "desc" } })
