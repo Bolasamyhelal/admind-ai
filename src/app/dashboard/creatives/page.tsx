@@ -79,17 +79,14 @@ export default function CreativesPage() {
     try {
       const formData = new FormData()
       formData.append("userId", user!.id)
-      formData.append("name", creative.name)
-      formData.append("platform", creative.platform || "")
-      formData.append("notes", "إعادة تحليل: " + (creative.notes || ""))
-      // Create a tiny file to trigger analysis
+      formData.append("retryId", creative.id)
       const blob = new Blob([""], { type: "text/plain" })
       formData.append("file", blob, "reat.txt")
 
       const res = await fetch("/api/creatives", { method: "POST", body: formData })
       const data = await res.json()
       if (data.creative) {
-        setCreatives((prev) => [data.creative, ...prev])
+        setCreatives((prev) => prev.map((c) => c.id === creative.id ? { ...c, ...data.creative } : c))
       }
     } catch {} finally {
       setAnalyzingId(null)
