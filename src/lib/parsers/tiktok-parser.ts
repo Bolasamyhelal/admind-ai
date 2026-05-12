@@ -43,3 +43,29 @@ function mapTikTokRow(row: any): TikTokRow {
     ctr: parseFloat(row.CTR || row.ctr || 0),
   }
 }
+
+export function aggregateTikTokData(rows: TikTokRow[]) {
+  const total = { spend: 0, impressions: 0, clicks: 0, conversions: 0, revenue: 0 }
+  for (const row of rows) {
+    total.spend += row.spend
+    total.impressions += row.impressions
+    total.clicks += row.clicks
+    total.conversions += row.conversions
+    total.revenue += row.revenue
+  }
+  return {
+    spend: total.spend,
+    revenue: total.revenue,
+    roas: total.spend > 0 ? total.revenue / total.spend : 0,
+    cpa: total.conversions > 0 ? total.spend / total.conversions : 0,
+    ctr: total.impressions > 0 ? (total.clicks / total.impressions) * 100 : 0,
+    cpm: total.impressions > 0 ? (total.spend / total.impressions) * 1000 : 0,
+    cpc: total.clicks > 0 ? total.spend / total.clicks : 0,
+    conversionRate: total.clicks > 0 ? (total.conversions / total.clicks) * 100 : 0,
+    frequency: 0,
+    impressions: total.impressions,
+    clicks: total.clicks,
+    conversions: total.conversions,
+    profit: total.revenue - total.spend,
+  }
+}

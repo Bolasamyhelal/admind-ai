@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { parseMetaReport, aggregateMetaData } from "@/lib/parsers/meta-parser"
+import { parseTikTokReport, aggregateTikTokData } from "@/lib/parsers/tiktok-parser"
+import { parseGoogleReport, aggregateGoogleData } from "@/lib/parsers/google-parser"
+import { parseSnapchatReport, aggregateSnapchatData } from "@/lib/parsers/snapchat-parser"
 import { buildAnalysisFromMetrics, createSmartAlerts } from "@/lib/analysis"
 
 export async function POST(req: NextRequest) {
@@ -32,6 +35,21 @@ export async function POST(req: NextRequest) {
         const rows = parseMetaReport(buffer)
         if (rows.length > 0) {
           parsedMetrics = aggregateMetaData(rows)
+        }
+      } else if (platform === "tiktok") {
+        const rows = parseTikTokReport(buffer, file.name)
+        if (rows.length > 0) {
+          parsedMetrics = aggregateTikTokData(rows)
+        }
+      } else if (platform === "google") {
+        const rows = parseGoogleReport(buffer, file.name)
+        if (rows.length > 0) {
+          parsedMetrics = aggregateGoogleData(rows)
+        }
+      } else if (platform === "snapchat") {
+        const rows = parseSnapchatReport(buffer, file.name)
+        if (rows.length > 0) {
+          parsedMetrics = aggregateSnapchatData(rows)
         }
       }
     } catch (parseErr) {

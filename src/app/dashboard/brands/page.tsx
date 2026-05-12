@@ -101,13 +101,14 @@ export default function BrandsPage() {
     const result: any = {}
     for (const [q, a] of Object.entries(answers)) {
       const lower = q.toLowerCase()
-      if (lower.includes("تخصص") || lower.includes("نيتش") || lower.includes("مجال") || lower.includes("niche")) result.niche = a
-      else if (lower.includes("موقع") || lower.includes("ويب") || lower.includes("website") || lower.includes("url")) result.website = a
-      else if (lower.includes("هدف") || lower.includes("هدف") || lower.includes("goal")) result.goals = a
-      else if (lower.includes("جمهور") || lower.includes("audience") || lower.includes("عميل")) result.targetAudience = a
-      else if (lower.includes("منصة") || lower.includes("platform") || lower.includes("بلاتفورم")) result.platforms = a
-      else if (lower.includes("ميزانية") || lower.includes("budget") || lower.includes("ميزانيه")) result.monthlyBudget = a
-      else if (lower.includes("بلد") || lower.includes("دولة") || lower.includes("country") || lower.includes("دوله")) result.country = a
+      if (lower.includes("تخصص") || lower.includes("نيتش") || lower.includes("مجال") || lower.includes("niche") || lower.includes("منتج") || lower.includes("خدمة") || lower.includes("product") || lower.includes("service")) result.niche = a
+      else if (lower.includes("عميل") || lower.includes("جمهور") || lower.includes("audience") || lower.includes("ideal")) result.targetAudience = a
+      else if (lower.includes("هدف") || lower.includes("goal") || lower.includes("توصل") || lower.includes("شهور")) result.goals = a
+      else if (lower.includes("منصة") || lower.includes("platform") || lower.includes("شغال") || lower.includes("بتعلن")) result.platforms = a
+      else if (lower.includes("ميزانية") || lower.includes("budget") || lower.includes("ميزانيه") || lower.includes("monthly")) result.monthlyBudget = a
+      else if (lower.includes("مشكلة") || lower.includes("تحدي") || lower.includes("بوجه") || lower.includes("challenge") || lower.includes("problem")) result.challenges = a
+      else if (lower.includes("منافس") || lower.includes("competitor") || lower.includes("بيميز") || lower.includes("ميزك")) result.competition = a
+      else if (lower.includes("جربت") || lower.includes("نجح") || lower.includes("فشل") || lower.includes("جرب") || lower.includes("tried")) result.experiments = a
       else result.notes = (result.notes || "") + `${q}: ${a}\n`
     }
     return result
@@ -195,14 +196,28 @@ export default function BrandsPage() {
                   <div>
                     {onboarding.analysis && (
                       <div className="mb-4 p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="h-4 w-4 text-purple-600" />
+                          <span className="text-xs font-bold text-purple-700 dark:text-purple-300">تحليل ذكي</span>
+                        </div>
                         <p className="text-sm text-purple-700 dark:text-purple-300">{onboarding.analysis}</p>
+                      </div>
+                    )}
+
+                    {onboarding.suggestedMarket && (
+                      <div className="mb-4 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <TrendingUp className="h-4 w-4 text-blue-600" />
+                          <span className="text-xs font-bold text-blue-700 dark:text-blue-300">تحليل السوق</span>
+                        </div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">{onboarding.suggestedMarket}</p>
                       </div>
                     )}
 
                     {onboarding.suggestedNiche && (
                       <div className="mb-4 flex flex-wrap gap-2">
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600">التخصص: {onboarding.suggestedNiche}</span>
-                        {onboarding.suggestedPlatforms && <span className="text-xs px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600">المنصات: {onboarding.suggestedPlatforms}</span>}
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 border border-blue-200">التخصص المقترح: {onboarding.suggestedNiche}</span>
+                        {onboarding.suggestedPlatforms && <span className="text-xs px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 border border-green-200">المنصات: {onboarding.suggestedPlatforms}</span>}
                       </div>
                     )}
 

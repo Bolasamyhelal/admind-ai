@@ -40,7 +40,15 @@ export async function POST(req: NextRequest) {
 
     // Step 1: AI onboarding - if questions are provided, answer them
     if (step === "onboard") {
-      const fields = ["التخصص (إيه مجال البراند؟)", "رابط الموقع الإلكتروني (إن وجد)", "مين الجمهور المستهدف؟", "إيه المنصات اللي بتعلن عليها؟", "إيه الميزانية الشهرية للإعلانات؟", "البلد", "إيه أهداف البراند؟"]
+      const fields = [
+        "إيه تخصص البراند بالظبط وإيه الخدمة أو المنتج اللي بتبيعه؟",
+        "مين العميل المثالي بتاعك بالضبط (عمره، اهتماماته، بيشتري إزاي)؟",
+        "إيه أكبر مشكلة أو تحدي بوجهك دلوقتي في الماركتنج أو المبيعات؟",
+        "كم ميزانية الإعلانات الشهرية حاليًا وإيه هي المنصات اللي شغال عليها؟",
+        "إيه أهدافك الرقمية اللي عايز توصلها خلال 3 شهور (مبيعات، تحويلات، وعي)؟",
+        "مين أكبر منافسيك في السوق وإيه اللي بيميزك عنهم؟",
+        "جربت إيه قبل كدا في الإعلانات والماركتنج وإيه اللي نجح أو فشل؟",
+      ]
       const answered = Object.keys(answers || {})
       const remaining = fields.filter(f => !answered.some(a => f.includes(a)))
       const complete = remaining.length === 0 || answered.length >= 4
@@ -48,15 +56,17 @@ export async function POST(req: NextRequest) {
       let analysis = ""
       let suggestedNiche = ""
       let suggestedPlatforms = ""
+      let suggestedMarket = ""
       if (Object.keys(answers || {}).length > 0) {
-        const prompt = `حلل هذه المعلومات عن براند اسمه "${name}":
+        const prompt = `أنت خبير استراتيجي في الماركتنج والمبيعات. حلل المعلومات دي لبراند اسمه "${name}":
 ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
 
 رد JSON فقط:
 {
-  "analysis": "تحليل سريع من سطرين عن البراند بالعربي",
-  "suggestedNiche": "التخصص المقترح حسب المعلومات",
-  "suggestedPlatforms": "المنصات المقترحة"
+  "analysis": "تحليل سريع ومحترف (جملتين) عن وضع البراند وفرصه في السوق بالعربي",
+  "suggestedNiche": "التخصص المقترح حسب معلوماته",
+  "suggestedPlatforms": "المنصات الإعلانية المقترحة (فيسبوك، تيك توك، جوجل، سناب)",
+  "suggestedMarket": "تحليل سريع للسوق والمنافسين واقتراح استراتيجي"
 }`
         try {
           const content = await askAI(prompt, true)
@@ -64,6 +74,7 @@ ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
           analysis = r.analysis
           suggestedNiche = r.suggestedNiche
           suggestedPlatforms = r.suggestedPlatforms
+          suggestedMarket = r.suggestedMarket
         } catch {}
       }
 
@@ -74,6 +85,7 @@ ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
         analysis,
         suggestedNiche,
         suggestedPlatforms,
+        suggestedMarket,
       })
     }
 
