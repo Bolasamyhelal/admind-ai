@@ -32,7 +32,6 @@ const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "المهام اليومية", href: "/dashboard/tasks", icon: ListChecks },
   { label: "البراندات", href: "/dashboard/brands", icon: Store },
-  { label: "مرشد البراند", href: "/dashboard/brand-mentor", icon: MessageSquare },
   { label: "ملفات البراندات", href: "/dashboard/brand-media", icon: FolderOpen },
   { label: "محلل المواقع", href: "/dashboard/site-analyzer", icon: Search },
   { label: "أبحاث النيتش", href: "/dashboard/niche-research", icon: Compass },
