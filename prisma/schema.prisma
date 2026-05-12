@@ -67,6 +67,7 @@ model Brand {
   analyses Analysis[]
   creatives Creative[]
   campaignExecs CampaignExecution[] @relation("brandCampaigns")
+  tasks        Task[]
 
   @@index([userId])
 }
@@ -294,15 +295,22 @@ model Task {
   description String?
   status      String   @default("pending")
   priority    String   @default("medium")
+  taskType    String?  // ad_upload, creative_review, analysis, content, competitor, other
   date        String?
   dueDate     String?
   order       Int      @default(0)
+  brandId     String?
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   checklists TaskChecklist[]
+  brand     Brand?          @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([brandId])
+  @@index([date])
 }
 
 model TaskChecklist {

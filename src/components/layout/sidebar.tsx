@@ -21,6 +21,8 @@ import {
   Building2,
   Play,
   ListChecks,
+  FolderOpen,
+  MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -30,7 +32,9 @@ const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "المهام اليومية", href: "/dashboard/tasks", icon: ListChecks },
   { label: "البراندات", href: "/dashboard/brands", icon: Store },
+  { label: "مرشد البراند", href: "/dashboard/brand-mentor", icon: MessageSquare },
   { label: "الكريتيف", href: "/dashboard/creatives", icon: Image },
+  { label: "ملفات البراندات", href: "/dashboard/brand-media", icon: FolderOpen },
   { label: "محلل المواقع", href: "/dashboard/site-analyzer", icon: Search },
   { label: "أبحاث النيتش", href: "/dashboard/niche-research", icon: Compass },
   { label: "مستشار الحملات", href: "/dashboard/campaign-guide", icon: Lightbulb },

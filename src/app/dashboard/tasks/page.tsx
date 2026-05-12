@@ -9,7 +9,8 @@ import {
   Plus, CheckCircle2, Circle, Loader2, Trash2, X, Clock,
   Calendar, Flag, Edit3, AlertCircle, ChevronDown, ChevronUp,
   ListChecks, Filter, Search, ChevronLeft, ChevronRight,
-  BarChart3, LayoutList,
+  BarChart3, LayoutList, Store, Smartphone, Image,
+  TrendingUp, Target, Lightbulb,
 } from "lucide-react"
 
 const priorities = [
@@ -23,6 +24,17 @@ const statuses = [
   { value: "in_progress", label: "قيد التنفيذ" }, { value: "completed", label: "مكتمل" },
 ]
 const months = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+
+const taskTypes = [
+  { value: "ad_upload", label: "رفع إعلان", icon: Smartphone, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+  { value: "creative_design", label: "تصميم كريتف", icon: Image, color: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300" },
+  { value: "creative_review", label: "مراجعة كريتف", icon: Image, color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
+  { value: "analysis", label: "تحليل أداء", icon: TrendingUp, color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
+  { value: "campaign_review", label: "مراجعة حملة", icon: Target, color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
+  { value: "competitor", label: "متابعة منافسين", icon: Lightbulb, color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300" },
+  { value: "content", label: "محتوى جديد", icon: Image, color: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300" },
+  { value: "other", label: "أخرى", icon: ListChecks, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
+]
 
 function getWeekId(dateStr: string) {
   const d = new Date(dateStr)
@@ -44,13 +56,17 @@ export default function TasksPage() {
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
   const [calYear, setCalYear] = useState(() => new Date().getFullYear())
   const [selectedCalDate, setSelectedCalDate] = useState("")
+  const [brands, setBrands] = useState<any[]>([])
+  const [groupByBrand, setGroupByBrand] = useState(true)
   const { user } = useAuth()
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState("medium")
+  const [taskType, setTaskType] = useState("ad_upload")
   const [date, setDate] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [taskBrandId, setTaskBrandId] = useState("")
   const [checklistText, setChecklistText] = useState("")
   const [checklistItems, setChecklistItems] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -71,26 +87,37 @@ export default function TasksPage() {
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
 
+  // Load brands
+  useEffect(() => {
+    if (!user) return
+    fetch(`/api/brands?userId=${user.id}`)
+      .then((r) => r.json())
+      .then((d) => setBrands(d.brands || []))
+      .catch(() => {})
+  }, [user])
+
   const resetForm = () => {
-    setTitle(""); setDescription(""); setPriority("medium")
-    setDate(""); setDueDate(""); setChecklistText(""); setChecklistItems([])
+    setTitle(""); setDescription(""); setPriority("medium"); setTaskType("ad_upload")
+    setDate(""); setDueDate(""); setTaskBrandId(""); setChecklistText(""); setChecklistItems([])
     setError(""); setEditTask(null)
   }
   const openCreate = () => { resetForm(); setDate(new Date().toISOString().slice(0, 10)); setShowCreate(true) }
   const openEdit = (task: any) => {
     setEditTask(task); setTitle(task.title); setDescription(task.description || "")
-    setPriority(task.priority); setDate(task.date || ""); setDueDate(task.dueDate || "")
-    setChecklistItems(task.checklists?.map((c: any) => c.text) || []); setShowCreate(true)
+    setPriority(task.priority); setTaskType(task.taskType || "other"); setDate(task.date || ""); setDueDate(task.dueDate || "")
+    setTaskBrandId(task.brandId || ""); setChecklistItems(task.checklists?.map((c: any) => c.text) || []); setShowCreate(true)
   }
 
   const handleSave = async () => {
     if (!title.trim()) { setError("العنوان مطلوب"); return }
     setSaving(true); setError("")
     try {
+      const body: any = { id: editTask?.id, title: title.trim(), description, priority, taskType, date, dueDate, brandId: taskBrandId || null }
       if (editTask) {
-        await fetch("/api/tasks", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editTask.id, title: title.trim(), description, priority, date, dueDate }) })
+        await fetch("/api/tasks", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       } else {
-        await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: title.trim(), description, priority, date, dueDate, checklists: checklistItems }) })
+        body.checklists = checklistItems
+        await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       }
       setShowCreate(false); resetForm(); fetchTasks()
     } catch { setError("فشل الحفظ") } finally { setSaving(false) }
@@ -221,8 +248,26 @@ export default function TasksPage() {
             <button onClick={() => setView("calendar")} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1", view === "calendar" ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500")}>
               <Calendar className="h-3.5 w-3.5" /> تقويم
             </button>
+            <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5" />
+            <button onClick={() => setGroupByBrand(!groupByBrand)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1", groupByBrand ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500")}>
+              <Store className="h-3.5 w-3.5" /> براندات
+            </button>
           </div>
         </div>
+
+        {/* Quick Templates */}
+        {brands.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-gray-400 font-medium">إضافة سريعة للبراند:</span>
+            {brands.slice(0, 6).map((b) => (
+              <button key={b.id} onClick={() => { openCreate(); setTaskBrandId(b.id); setTitle(`رفع إعلان - ${b.name}`); setTaskType("ad_upload") }}
+                className="flex items-center gap-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+              >
+                <Store className="h-3 w-3" /> {b.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ===== CALENDAR VIEW ===== */}
         {view === "calendar" ? (
@@ -328,58 +373,91 @@ export default function TasksPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredTasks.map((task) => {
-                const p = priorities.find((p) => p.value === task.priority)
-                const isExpanded = expanded === task.id
-                const checklistDone = task.checklists?.filter((c: any) => c.completed).length || 0
-                const checklistTotal = task.checklists?.length || 0
-                return (
-                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    className={cn("rounded-xl border transition-all",
-                      task.status === "completed" ? "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900",
-                      "hover:border-purple-200 dark:hover:border-purple-800")}
-                  >
-                    <div className="flex items-center gap-3 p-4">
-                      <button onClick={() => toggleStatus(task)} className="shrink-0">
-                        {task.status === "completed" ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : <Circle className="h-6 w-6 text-gray-300 dark:text-gray-600 hover:text-purple-400 transition-colors" />}
-                      </button>
-                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleStatus(task)}>
-                        <p className={cn("text-sm font-medium truncate", task.status === "completed" ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{task.title}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5", p?.color)}>
-                            <Flag className="h-3 w-3" />{p?.label}
-                          </span>
-                          {task.date && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Calendar className="h-3 w-3" />{task.date}</span>}
-                          {task.dueDate && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Clock className="h-3 w-3" />{task.dueDate}</span>}
-                          {checklistTotal > 0 && <span className="text-[10px] text-gray-400">{checklistDone}/{checklistTotal}</span>}
-                          {task.description && <span className="text-[10px] text-gray-400 truncate max-w-[150px]">{task.description}</span>}
+              {(() => {
+                const renderTask = (task: any) => {
+                  const p = priorities.find((p) => p.value === task.priority)
+                  const tt = taskTypes.find((t) => t.value === task.taskType)
+                  const isExpanded = expanded === task.id
+                  const checklistDone = task.checklists?.filter((c: any) => c.completed).length || 0
+                  const checklistTotal = task.checklists?.length || 0
+                  return (
+                    <motion.div key={task.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      className={cn("rounded-xl border transition-all",
+                        task.status === "completed" ? "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/10" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900",
+                        "hover:border-purple-200 dark:hover:border-purple-800")}
+                    >
+                      <div className="flex items-center gap-3 p-4">
+                        <button onClick={() => toggleStatus(task)} className="shrink-0">
+                          {task.status === "completed" ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : <Circle className="h-6 w-6 text-gray-300 dark:text-gray-600 hover:text-purple-400 transition-colors" />}
+                        </button>
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleStatus(task)}>
+                          <p className={cn("text-sm font-medium truncate", task.status === "completed" ? "text-gray-400 line-through" : "text-gray-900 dark:text-white")}>{task.title}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5", p?.color)}>
+                              <Flag className="h-3 w-3" />{p?.label}
+                            </span>
+                            {tt && <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5", tt.color)}>
+                              <tt.icon className="h-3 w-3" />{tt.label}
+                            </span>}
+                            {task.brand?.name && <span className="text-[10px] text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              <Store className="h-3 w-3" />{task.brand.name}
+                            </span>}
+                            {task.date && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Calendar className="h-3 w-3" />{task.date}</span>}
+                            {task.dueDate && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Clock className="h-3 w-3" />{task.dueDate}</span>}
+                            {checklistTotal > 0 && <span className="text-[10px] text-gray-400">{checklistDone}/{checklistTotal}</span>}
+                            {task.description && <span className="text-[10px] text-gray-400 truncate max-w-[150px]">{task.description}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => openEdit(task)} className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all"><Edit3 className="h-4 w-4" /></button>
+                          <button onClick={() => deleteTask(task.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"><Trash2 className="h-4 w-4" /></button>
+                          {task.checklists?.length > 0 && (
+                            <button onClick={() => setExpanded(isExpanded ? null : task.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 transition-all">
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => openEdit(task)} className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all"><Edit3 className="h-4 w-4" /></button>
-                        <button onClick={() => deleteTask(task.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"><Trash2 className="h-4 w-4" /></button>
-                        {task.checklists?.length > 0 && (
-                          <button onClick={() => setExpanded(isExpanded ? null : task.id)} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 transition-all">
-                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </button>
-                        )}
+                      {isExpanded && task.checklists?.length > 0 && (
+                        <div className="px-4 pb-4 pr-14 space-y-1.5">
+                          {task.checklists.map((item: any) => (
+                            <div key={item.id} className="flex items-center gap-2">
+                              <button onClick={() => toggleChecklist(item)}>
+                                {item.completed ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600 shrink-0" />}
+                              </button>
+                              <span className={cn("text-xs", item.completed ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300")}>{item.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  )
+                }
+
+                if (groupByBrand) {
+                  const groups: Record<string, any[]> = {}
+                  for (const t of filteredTasks) {
+                    const key = t.brand?.id || "__none__"
+                    if (!groups[key]) groups[key] = []
+                    groups[key].push(t)
+                  }
+                  const brandMap = new Map(brands.map((b) => [b.id, b.name]))
+                  brandMap.set("__none__", "بدون براند")
+                  return Object.entries(groups).map(([brandId, brandTasks]) => (
+                    <div key={brandId}>
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <Store className="h-4 w-4 text-purple-500" />
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{brandMap.get(brandId) || "بدون براند"}</span>
+                        <span className="text-xs text-gray-400">({brandTasks.length})</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {brandTasks.map(renderTask)}
                       </div>
                     </div>
-                    {isExpanded && task.checklists?.length > 0 && (
-                      <div className="px-4 pb-4 pr-14 space-y-1.5">
-                        {task.checklists.map((item: any) => (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <button onClick={() => toggleChecklist(item)}>
-                              {item.completed ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600 shrink-0" />}
-                            </button>
-                            <span className={cn("text-xs", item.completed ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300")}>{item.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                )
-              })}
+                  ))
+                }
+                return filteredTasks.map(renderTask)
+              })()}
             </div>
           )
         )}
@@ -414,6 +492,32 @@ export default function TasksPage() {
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="تفاصيل المهمة..." rows={3}
                     className="flex w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 resize-none" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">نوع المهمة</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {taskTypes.map((tt) => (
+                      <button key={tt.value} type="button" onClick={() => setTaskType(tt.value)}
+                        className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all",
+                          taskType === tt.value
+                            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                            : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-purple-300")}
+                      >
+                        <tt.icon className="h-4 w-4" />
+                        {tt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {brands.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البراند</label>
+                    <select value={taskBrandId} onChange={(e) => setTaskBrandId(e.target.value)}
+                      className="flex h-10 w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-900 dark:text-white">
+                      <option value="">بدون براند</option>
+                      {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأولوية</label>

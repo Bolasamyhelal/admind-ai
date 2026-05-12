@@ -20,6 +20,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false)
   const [brandsLoading, setBrandsLoading] = useState(true)
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [reportCurrency, setReportCurrency] = useState("USD")
   const { user } = useAuth()
   const reportRef = useRef<HTMLDivElement>(null)
 
@@ -56,33 +57,23 @@ export default function ReportsPage() {
         (u: any) => new Date(u.createdAt).getTime() >= new Date(cutoff).getTime()
       )
 
-      // Aggregate metrics
-      const metrics = { spend: 0, revenue: 0, roas: 0, cpa: 0, ctr: 0, cpm: 0, cpc: 0, conversions: 0, impressions: 0, clicks: 0, profit: 0, count: 0 }
+      // Group by currency
+      const byCurrency: Record<string, any[]> = {}
       for (const a of periodAnalyses) {
-        if (!a.metrics) continue
-        try {
-          const m = JSON.parse(a.metrics)
-          metrics.spend += m.spend || 0
-          metrics.revenue += m.revenue || 0
-          metrics.conversions += m.conversions || 0
-          metrics.impressions += m.impressions || 0
-          metrics.clicks += m.clicks || 0
-          metrics.profit += m.profit || 0
-          metrics.roas += m.roas || 0
-          metrics.cpa += m.cpa || 0
-          metrics.ctr += m.ctr || 0
-          metrics.cpm += m.cpm || 0
-          metrics.cpc += m.cpc || 0
-          metrics.count++
-        } catch {}
+        const cur = getCurrency(a)
+        if (!byCurrency[cur]) byCurrency[cur] = []
+        byCurrency[cur].push(a)
       }
-      if (metrics.count > 0) {
-        metrics.roas /= metrics.count
-        metrics.cpa /= metrics.count
-        metrics.ctr /= metrics.count
-        metrics.cpm /= metrics.count
-        metrics.cpc /= metrics.count
+      const availableCurs = Object.keys(byCurrency)
+      if (availableCurs.length === 0) availableCurs.push("USD")
+
+      const perCurrency: Record<string, any> = {}
+      for (const [cur, items] of Object.entries(byCurrency)) {
+        perCurrency[cur] = calcMetrics(items)
       }
+
+      const defaultCur = availableCurs.includes(reportCurrency) ? reportCurrency : availableCurs[0]
+      setReportCurrency(defaultCur)
 
       setReport({
         brand: data.brand,
@@ -93,8 +84,8 @@ export default function ReportsPage() {
         uploads: periodUploads,
         campaigns: data.campaigns || [],
         creatives: data.creatives || [],
-        metrics,
-        currency: data.brand.currency || "USD",
+        perCurrency,
+        currencies: availableCurs,
         generatedAt: now.toISOString(),
       })
     } catch (err: any) {
@@ -227,22 +218,40 @@ export default function ReportsPage() {
                   الفترة: {new Date(report.startDate).toLocaleDateString("ar-EG")} → {new Date(report.endDate).toLocaleDateString("ar-EG")}
                 </div>
 
+                {/* Currency Tabs */}
+                {report.currencies?.length > 1 && (
+                  <div className="flex gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
+                    {report.currencies.map((cur: string) => (
+                      <button key={cur} onClick={() => setReportCurrency(cur)}
+                        className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                          reportCurrency === cur ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        }`}
+                      >
+                        {cur}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Metrics Grid */}
                 <div>
                   <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-purple-600" /> المؤشرات
+                    <TrendingUp className="h-4 w-4 text-purple-600" /> المؤشرات{report.currencies?.length > 1 && <span className="text-xs text-gray-400 font-normal">({reportCurrency})</span>}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { label: "إجمالي الإنفاق", value: formatCurrency(report.metrics.spend, report.currency), icon: DollarSign, color: "text-red-500" },
-                      { label: "الإيرادات", value: formatCurrency(report.metrics.revenue, report.currency), icon: TrendingUp, color: "text-green-500" },
-                      { label: "ROAS", value: `${report.metrics.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500" },
-                      { label: "CPA", value: formatCurrency(report.metrics.cpa, report.currency), icon: Target, color: "text-yellow-500" },
-                      { label: "CTR", value: `${report.metrics.ctr.toFixed(2)}%`, icon: BarChart3, color: "text-blue-500" },
-                      { label: "CPM", value: formatCurrency(report.metrics.cpm, report.currency), icon: BarChart3, color: "text-orange-500" },
-                      { label: "التحويلات", value: report.metrics.conversions || 0, icon: Target, color: "text-green-500" },
-                      { label: "الأرباح", value: formatCurrency(report.metrics.profit, report.currency), icon: DollarSign, color: "text-blue-500" },
-                    ].map((s) => (
+                    {(() => {
+                      const rm = report.perCurrency?.[reportCurrency] || { spend: 0, revenue: 0, roas: 0, cpa: 0, ctr: 0, cpm: 0, cpc: 0, conversions: 0, profit: 0, count: 0 }
+                      return [
+                        { label: "إجمالي الإنفاق", value: formatCurrency(rm.spend, reportCurrency), icon: DollarSign, color: "text-red-500" },
+                        { label: "الإيرادات", value: formatCurrency(rm.revenue, reportCurrency), icon: TrendingUp, color: "text-green-500" },
+                        { label: "ROAS", value: `${rm.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500" },
+                        { label: "CPA", value: formatCurrency(rm.cpa, reportCurrency), icon: Target, color: "text-yellow-500" },
+                        { label: "CTR", value: `${rm.ctr.toFixed(2)}%`, icon: BarChart3, color: "text-blue-500" },
+                        { label: "CPM", value: formatCurrency(rm.cpm, reportCurrency), icon: BarChart3, color: "text-orange-500" },
+                        { label: "التحويلات", value: rm.conversions || 0, icon: Target, color: "text-green-500" },
+                        { label: "الأرباح", value: formatCurrency(rm.profit, reportCurrency), icon: DollarSign, color: "text-blue-500" },
+                      ]
+                    })().map((s) => (
                       <div key={s.label} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                         <div className="flex items-center gap-1.5 mb-1">
                           <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
@@ -334,14 +343,34 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {!report && !loading && (
-          <div className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-16 text-center">
-            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-            <p className="text-gray-500 mb-1">اختر براند والفترة ثم اضغط "إنشاء التقرير"</p>
-            <p className="text-xs text-gray-400">التقارير تشمل المؤشرات والحملات والكريتفز والتقارير المرفوعة</p>
-          </div>
-        )}
       </motion.div>
     </DashboardLayout>
   )
+}
+
+function getCurrency(a: any): string {
+  if (a.marketData) {
+    try { const md = JSON.parse(a.marketData); if (md.currency) return md.currency } catch {}
+  }
+  return "USD"
+}
+
+function calcMetrics(analyses: any[]) {
+  const m = { spend: 0, revenue: 0, roas: 0, cpa: 0, ctr: 0, cpm: 0, cpc: 0, conversionRate: 0, frequency: 0, impressions: 0, clicks: 0, conversions: 0, profit: 0, count: 0 }
+  for (const a of analyses) {
+    if (!a.metrics) continue
+    try {
+      const p = JSON.parse(a.metrics)
+      m.spend += p.spend || 0; m.revenue += p.revenue || 0
+      m.impressions += p.impressions || 0; m.clicks += p.clicks || 0; m.conversions += p.conversions || 0
+      m.cpa += p.cpa || 0; m.ctr += p.ctr || 0; m.cpm += p.cpm || 0; m.cpc += p.cpc || 0
+      m.conversionRate += p.conversionRate || 0; m.frequency += p.frequency || 0; m.profit += p.profit || 0
+      m.roas += p.roas || 0; m.count++
+    } catch {}
+  }
+  if (m.count > 0) {
+    m.cpa /= m.count; m.ctr /= m.count; m.cpm /= m.count; m.cpc /= m.count
+    m.conversionRate /= m.count; m.frequency /= m.count; m.roas /= m.count
+  }
+  return m
 }

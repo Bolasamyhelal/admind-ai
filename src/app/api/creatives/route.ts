@@ -37,6 +37,28 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { id, fileData, name, userId } = body
+    if (!id || !userId) return NextResponse.json({ error: "id and userId required" }, { status: 400 })
+
+    const existing = await prisma.creative.findFirst({ where: { id, userId } })
+    if (!existing) return NextResponse.json({ error: "Creative not found" }, { status: 404 })
+
+    const creative = await prisma.creative.update({
+      where: { id },
+      data: {
+        ...(fileData !== undefined ? { fileData } : {}),
+        ...(name !== undefined ? { name } : {}),
+      },
+    })
+    return NextResponse.json({ success: true, creative })
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update creative" }, { status: 500 })
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)

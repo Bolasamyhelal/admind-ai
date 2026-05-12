@@ -8,11 +8,12 @@ import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { useAuth } from "@/context/auth-context"
 import { formatCurrency } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { Loader2, Store, TrendingUp, DollarSign, Eye } from "lucide-react"
+import { Loader2, Store, TrendingUp, DollarSign, Eye, Wallet, Repeat, Percent, CreditCard, MousePointerClick, Target } from "lucide-react"
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedCur, setSelectedCur] = useState("")
   const { user } = useAuth()
   const router = useRouter()
 
@@ -20,16 +21,20 @@ export default function DashboardPage() {
     if (user) {
       fetch(`/api/dashboard?userId=${user.id}`)
         .then((r) => r.json())
-        .then((d) => { if (d.metrics) setData(d) })
+        .then((d) => { if (d.metricsByCurrency) { setData(d); setSelectedCur(d.metricsByCurrency[0]?.currency || "") } })
         .catch(() => {})
         .finally(() => setLoading(false))
     }
   }, [user])
 
-  const m = data?.metrics
-  const currency = data?.currency || "USD"
+  const allCurrencies = data?.metricsByCurrency || []
+  const m = allCurrencies.find((c: any) => c.currency === selectedCur) || allCurrencies[0] || {}
+  const currency = m?.currency || "USD"
 
-  const kpiData = m ? [
+  const currencies = allCurrencies.map((c: any) => c.currency)
+  const multiCurrency = currencies.length > 1
+
+  const kpiData = m?.spend !== undefined ? [
     { label: "إجمالي الإنفاق", value: formatCurrency(m.spend || 0, currency), change: 12.5, icon: "DollarSign", status: "good" as const, metricKey: "spend" },
     { label: "الإيرادات", value: formatCurrency(m.revenue || 0, currency), change: 23.1, icon: "TrendingUp", status: "excellent" as const, metricKey: "revenue" },
     { label: "ROAS", value: `${(m.roas || 0).toFixed(2)}x`, change: 8.2, icon: "Target", status: "excellent" as const, metricKey: "roas" },
@@ -44,27 +49,18 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">لوحة التحكم</h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
-            أداء حملاتك الإعلانية في لمحة
-          </p>
+          <p className="mt-1 text-gray-500 dark:text-gray-400">أداء حملاتك الإعلانية في لمحة</p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-          </div>
-        ) : !data ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div>
+        ) : !data || allCurrencies.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-16 text-center">
             <p className="text-gray-500 mb-4">لا توجد بيانات بعد</p>
-            <button
-              onClick={() => router.push("/dashboard/upload")}
+            <button onClick={() => router.push("/dashboard/upload")}
               className="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-purple-700"
             >
               ارفع تقريرك الأول
@@ -72,14 +68,26 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
+            {/* Currency Tabs */}
+            {multiCurrency && (
+              <div className="flex gap-1 mb-6 overflow-x-auto">
+                {allCurrencies.map((c: any) => (
+                  <button key={c.currency} onClick={() => setSelectedCur(c.currency)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedCur === c.currency
+                        ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                        : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-transparent"
+                    }`}
+                  >
+                    {c.currency} ({c.analysisCount} تحليل{c.analysisCount > 1 ? "ات" : ""})
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
               {kpiData.map((kpi, i) => (
-                <motion.div
-                  key={kpi.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
+                <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                   <KPICard {...kpi} />
                 </motion.div>
               ))}

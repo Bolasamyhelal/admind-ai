@@ -9,7 +9,7 @@ import { formatCurrency } from "@/lib/utils"
 import {
   ArrowLeft, Store, Globe, Loader2, TrendingUp, DollarSign, Target,
   BarChart3, Image, Play, Download, Trash2, ExternalLink, Sparkles, Lightbulb,
-  Users, Monitor, Smartphone, ShoppingBag,
+  Users, Monitor, Smartphone, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
 } from "lucide-react"
 
 export default function BrandDetailPage() {
@@ -17,6 +17,11 @@ export default function BrandDetailPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [selectedCurrency, setSelectedCurrency] = useState("USD")
+  const [brandTasks, setBrandTasks] = useState<any[]>([])
+  const [showQuickTask, setShowQuickTask] = useState(false)
+  const [quickTaskTitle, setQuickTaskTitle] = useState("")
+  const [savingTask, setSavingTask] = useState(false)
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -30,6 +35,51 @@ export default function BrandDetailPage() {
       .catch(() => { setError("فشل تحميل البراند"); setLoading(false) })
   }, [user, brandId])
 
+  useEffect(() => {
+    if (!data?.analyses?.length) return
+    const currencies = [...new Set(data.analyses.map((a: any) => getCurrency(a)))] as string[]
+    if (currencies.length > 0 && !currencies.includes(selectedCurrency)) {
+      setSelectedCurrency(currencies[0])
+    }
+  }, [data])
+
+  // Fetch tasks for this brand
+  useEffect(() => {
+    if (!brandId) return
+    fetch(`/api/tasks?brandId=${brandId}`)
+      .then((r) => r.json())
+      .then((d) => setBrandTasks(d.tasks || []))
+      .catch(() => {})
+  }, [brandId])
+
+  const addQuickTask = async () => {
+    if (!quickTaskTitle.trim() || !user || !brandId) return
+    setSavingTask(true)
+    try {
+      await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: quickTaskTitle.trim(), brandId, taskType: "ad_upload", date: new Date().toISOString().slice(0, 10), userId: user.id }),
+      })
+      const res = await fetch(`/api/tasks?brandId=${brandId}`)
+      const d = await res.json()
+      setBrandTasks(d.tasks || [])
+      setQuickTaskTitle("")
+      setShowQuickTask(false)
+    } catch {} finally { setSavingTask(false) }
+  }
+
+  const toggleTaskStatus = async (task: any) => {
+    await fetch("/api/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: task.id, status: task.status === "completed" ? "pending" : "completed" }),
+    })
+    const res = await fetch(`/api/tasks?brandId=${brandId}`)
+    const d = await res.json()
+    setBrandTasks(d.tasks || [])
+  }
+
   const handleExport = () => {
     if (!data) return
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
@@ -42,8 +92,17 @@ export default function BrandDetailPage() {
   if (loading) return (<DashboardLayout><div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div></DashboardLayout>)
   if (error || !brand) return (<DashboardLayout><div className="text-center py-20"><p className="text-gray-500">{error || "البراند غير موجود"}</p></div></DashboardLayout>)
 
-  const metrics = data?.analyses?.length ? aggregateMetrics(data.analyses) : null
-  const currency = brand.currency || "USD"
+  const analysesList = data?.analyses || []
+  const byCurrencyMap: Record<string, any[]> = {}
+  for (const a of analysesList) {
+    const cur = getCurrency(a)
+    if (!byCurrencyMap[cur]) byCurrencyMap[cur] = []
+    byCurrencyMap[cur].push(a)
+  }
+  const currencies = Object.keys(byCurrencyMap)
+  const activeCur = currencies.includes(selectedCurrency) ? selectedCurrency : (currencies[0] || "USD")
+  const metrics = analysesList.length ? calcMetrics(byCurrencyMap[activeCur] || []) : null
+  const currency = activeCur
 
   return (
     <DashboardLayout>
@@ -137,6 +196,21 @@ export default function BrandDetailPage() {
               ) : null
             })()}
 
+            {/* Currency Tabs */}
+            {currencies.length > 1 && metrics && (
+              <div className="flex gap-1 rounded-lg bg-gray-100 dark:bg-gray-800 p-1 w-fit">
+                {currencies.map((cur) => (
+                  <button key={cur} onClick={() => setSelectedCurrency(cur)}
+                    className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      activeCur === cur ? "bg-white dark:bg-gray-700 text-purple-600 shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    {cur}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Metrics */}
             {metrics && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -144,7 +218,11 @@ export default function BrandDetailPage() {
                   { label: "إجمالي الإنفاق", value: formatCurrency(metrics.spend, currency), icon: DollarSign, color: "text-red-500" },
                   { label: "الإيرادات", value: formatCurrency(metrics.revenue, currency), icon: TrendingUp, color: "text-green-500" },
                   { label: "ROAS", value: `${metrics.roas.toFixed(2)}x`, icon: Target, color: "text-purple-500" },
-                  { label: "عدد التحليلات", value: data.analyses.length, icon: BarChart3, color: "text-blue-500" },
+                  { label: "CPA", value: formatCurrency(metrics.cpa, currency), icon: Target, color: "text-yellow-500" },
+                  { label: "CTR", value: `${metrics.ctr.toFixed(2)}%`, icon: BarChart3, color: "text-blue-500" },
+                  { label: "CPM", value: formatCurrency(metrics.cpm, currency), icon: BarChart3, color: "text-orange-500" },
+                  { label: "التحويلات", value: metrics.conversions || 0, icon: Target, color: "text-green-500" },
+                  { label: "الأرباح", value: formatCurrency(metrics.profit, currency), icon: DollarSign, color: "text-blue-500" },
                 ].map((s) => (
                   <div key={s.label} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
                     <div className="flex items-center gap-2 mb-1">
@@ -188,6 +266,47 @@ export default function BrandDetailPage() {
               </div>
             )}
 
+            {/* Tasks */}
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">المهام</h3>
+                <button onClick={() => setShowQuickTask(true)} className="text-purple-600 hover:text-purple-700 p-1">
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+              {showQuickTask && (
+                <div className="mb-3 flex gap-2">
+                  <input value={quickTaskTitle} onChange={(e) => setQuickTaskTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addQuickTask()}
+                    placeholder="مهمة جديدة..."
+                    className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-900 dark:text-white placeholder:text-gray-400"
+                    autoFocus
+                  />
+                  <button onClick={addQuickTask} disabled={savingTask || !quickTaskTitle.trim()}
+                    className="px-3 rounded-lg bg-purple-600 text-xs text-white font-medium hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {savingTask ? "..." : "إضافة"}
+                  </button>
+                </div>
+              )}
+              {brandTasks.length > 0 ? (
+                <div className="space-y-1.5">
+                  {brandTasks.slice(0, 5).map((t: any) => (
+                    <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30 text-xs">
+                      <button onClick={() => toggleTaskStatus(t)} className="shrink-0">
+                        {t.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600" />}
+                      </button>
+                      <span className={`flex-1 truncate ${t.status === "completed" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"}`}>
+                        {t.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 text-center py-3">لا توجد مهام</p>
+              )}
+            </div>
+
             {data.creatives?.length > 0 && (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">الكريتفز</h3>
@@ -211,18 +330,29 @@ export default function BrandDetailPage() {
   )
 }
 
-function aggregateMetrics(analyses: any[]) {
-  const m = { spend: 0, revenue: 0, roas: 0, count: 0 }
+function getCurrency(a: any): string {
+  if (a.marketData) {
+    try { const md = JSON.parse(a.marketData); if (md.currency) return md.currency } catch {}
+  }
+  return "USD"
+}
+
+function calcMetrics(analyses: any[]) {
+  const m = { spend: 0, revenue: 0, roas: 0, cpa: 0, ctr: 0, cpm: 0, cpc: 0, conversionRate: 0, frequency: 0, impressions: 0, clicks: 0, conversions: 0, profit: 0, count: 0 }
   for (const a of analyses) {
     if (!a.metrics) continue
     try {
-      const parsed = JSON.parse(a.metrics)
-      m.spend += parsed.spend || 0
-      m.revenue += parsed.revenue || 0
-      m.roas += parsed.roas || 0
-      m.count++
+      const p = JSON.parse(a.metrics)
+      m.spend += p.spend || 0; m.revenue += p.revenue || 0
+      m.impressions += p.impressions || 0; m.clicks += p.clicks || 0; m.conversions += p.conversions || 0
+      m.cpa += p.cpa || 0; m.ctr += p.ctr || 0; m.cpm += p.cpm || 0; m.cpc += p.cpc || 0
+      m.conversionRate += p.conversionRate || 0; m.frequency += p.frequency || 0; m.profit += p.profit || 0
+      m.roas += p.roas || 0; m.count++
     } catch {}
   }
-  if (m.count > 0) m.roas = m.roas / m.count
+  if (m.count > 0) {
+    m.cpa /= m.count; m.ctr /= m.count; m.cpm /= m.count; m.cpc /= m.count
+    m.conversionRate /= m.count; m.frequency /= m.count; m.roas /= m.count
+  }
   return m
 }

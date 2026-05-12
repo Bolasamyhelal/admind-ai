@@ -18,15 +18,19 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const date = searchParams.get("date")
     const status = searchParams.get("status")
+    const brandId = searchParams.get("brandId")
+    const taskType = searchParams.get("taskType")
 
     const where: any = { userId: user.id }
     if (date) where.date = date
     if (status) where.status = status
+    if (brandId) where.brandId = brandId
+    if (taskType) where.taskType = taskType
 
     const tasks = await prisma.task.findMany({
       where,
       orderBy: [{ date: "asc" }, { order: "asc" }, { createdAt: "desc" }],
-      include: { checklists: { orderBy: { createdAt: "asc" } } },
+      include: { checklists: { orderBy: { createdAt: "asc" } }, brand: { select: { id: true, name: true } } },
     })
 
     return NextResponse.json({ tasks })
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "غير مصرح" }, { status: 401 })
 
     const body = await req.json()
-    const { title, description, priority, date, dueDate, checklists } = body
+    const { title, description, priority, date, dueDate, checklists, brandId, taskType } = body
 
     if (!title?.trim()) {
       return NextResponse.json({ error: "عنوان المهمة مطلوب" }, { status: 400 })
@@ -52,14 +56,16 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         description: description?.trim() || null,
         priority: priority || "medium",
+        taskType: taskType || null,
         date: date || null,
         dueDate: dueDate || null,
+        brandId: brandId || null,
         userId: user.id,
         checklists: checklists?.length
           ? { create: checklists.map((c: string) => ({ text: c, userId: user.id })) }
           : undefined,
       },
-      include: { checklists: true },
+      include: { checklists: true, brand: { select: { id: true, name: true } } },
     })
 
     return NextResponse.json({ task })
@@ -74,7 +80,7 @@ export async function PUT(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "غير مصرح" }, { status: 401 })
 
     const body = await req.json()
-    const { id, title, description, status, priority, date, dueDate } = body
+    const { id, title, description, status, priority, date, dueDate, brandId, taskType } = body
 
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 })
 
@@ -90,8 +96,10 @@ export async function PUT(req: NextRequest) {
         ...(priority !== undefined ? { priority } : {}),
         ...(date !== undefined ? { date: date || null } : {}),
         ...(dueDate !== undefined ? { dueDate: dueDate || null } : {}),
+        ...(brandId !== undefined ? { brandId: brandId || null } : {}),
+        ...(taskType !== undefined ? { taskType: taskType || null } : {}),
       },
-      include: { checklists: true },
+      include: { checklists: true, brand: { select: { id: true, name: true } } },
     })
 
     return NextResponse.json({ task })

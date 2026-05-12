@@ -7,8 +7,9 @@ import { useAuth } from "@/context/auth-context"
 import { useRouter } from "next/navigation"
 import { MetricDetail } from "@/components/ui/metric-detail"
 import { metricExplanations } from "@/lib/metric-explanations"
+import { ImageEditor } from "@/components/creative/image-editor"
 import {
-  Image, Upload, X, Loader2, TrendingUp, AlertCircle,
+  Image, Upload, X, Loader2, TrendingUp, AlertCircle, Edit3,
   CheckCircle2, Star, Lightbulb, Target, Smartphone,
   BarChart3, Zap, Sparkles, RefreshCw,
 } from "lucide-react"
@@ -25,6 +26,7 @@ export default function CreativesPage() {
   const [creativePlatform, setCreativePlatform] = useState("")
   const [creativeNotes, setCreativeNotes] = useState("")
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+  const [editingCreative, setEditingCreative] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const router = useRouter()
@@ -237,7 +239,14 @@ export default function CreativesPage() {
                   onClick={() => setSelectedCreative(c)}
                 >
                   {c.fileData && c.fileData.startsWith("data:image/") ? (
-                    <img src={c.fileData} alt={c.name} className="w-full h-full object-cover" />
+                    <>
+                      <img src={c.fileData} alt={c.name} className="w-full h-full object-cover" />
+                      <button onClick={(e) => { e.stopPropagation(); setEditingCreative(c) }}
+                        className="absolute top-2 left-2 p-1.5 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                    </>
                   ) : (
                     <div className="flex items-center justify-center h-full">
                       <Image className="h-12 w-12 text-gray-300 dark:text-gray-600" />
@@ -305,6 +314,22 @@ export default function CreativesPage() {
               </motion.div>
             ))}
           </div>
+        )}
+        {/* Image Editor */}
+        {editingCreative && editingCreative.fileData?.startsWith("data:image/") && (
+          <ImageEditor
+            imageData={editingCreative.fileData}
+            onSave={async (newData) => {
+              await fetch("/api/creatives", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: editingCreative.id, fileData: newData, userId: user?.id }),
+              })
+              setCreatives((prev) => prev.map((c) => c.id === editingCreative.id ? { ...c, fileData: newData } : c))
+              setEditingCreative(null)
+            }}
+            onClose={() => setEditingCreative(null)}
+          />
         )}
       </motion.div>
     </DashboardLayout>
