@@ -177,7 +177,40 @@ function getMetricAnalysis(metricKey: string, value: number, formatter: any) {
   return analysis
 }
 
-function MetricAnalysisModal({ metric, onClose }: { metric: any; onClose: () => void }) {
+function MetricAnalysisModal({ metric, onClose, brand }: { metric: any; onClose: () => void; brand?: any }) {
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiResult, setAiResult] = useState<any>(null)
+  const [aiError, setAiError] = useState("")
+
+  const runAiAnalysis = async () => {
+    if (!metric) return
+    setAiLoading(true)
+    setAiError("")
+    setAiResult(null)
+    try {
+      const res = await fetch("/api/analyze-metric", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metricKey: metric.key,
+          metricLabel: metric.label,
+          value: metric.rawValue,
+          currency: metric._currency || "USD",
+          brandName: brand?.name,
+          brandNiche: brand?.niche,
+          brandGoals: brand?.goals,
+          brandPlatforms: brand?.platforms,
+        }),
+      })
+      const data = await res.json()
+      if (data.analysis) setAiResult(data)
+      else setAiError("لم يتم الحصول على تحليل من AI")
+    } catch {
+      setAiError("فشل الاتصال بخدمة AI")
+    }
+    setAiLoading(false)
+  }
+
   return (
     <AnimatePresence>
       {metric && (
@@ -187,7 +220,7 @@ function MetricAnalysisModal({ metric, onClose }: { metric: any; onClose: () => 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.4 }}
-            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl max-w-lg w-full overflow-hidden"
+            className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -236,15 +269,86 @@ function MetricAnalysisModal({ metric, onClose }: { metric: any; onClose: () => 
                 </div>
               </div>
 
-              {/* Tip */}
-              <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-100 dark:border-purple-800/30">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                  <p className="text-xs font-semibold text-gray-900 dark:text-white">نصيحة</p>
+              {/* AI Analysis Section */}
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">تحليل AI مخصص</p>
+                  </div>
+                  <button onClick={runAiAnalysis} disabled={aiLoading}
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-xs font-medium text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 transition-all"
+                  >
+                    {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {aiLoading ? "جارٍ التحليل..." : "حلل بالذكاء الاصطناعي"}
+                  </button>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  كلما زدت البيانات اللي ترفعها، كلما دقت التحليلات و كانت التوصيات أدق.
-                </p>
+
+                {aiError && (
+                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30">
+                    <p className="text-xs text-red-600 dark:text-red-400">{aiError}</p>
+                  </div>
+                )}
+
+                {aiLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">Gemini بيحلل بياناتك...</p>
+                    </div>
+                  </div>
+                )}
+
+                {aiResult && !aiLoading && (
+                  <div className="space-y-3">
+                    <div className={`p-3 rounded-lg border ${
+                      aiResult.status === "excellent" || aiResult.status === "good"
+                        ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30"
+                        : aiResult.status === "warning"
+                        ? "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800/30"
+                        : "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30"
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        {aiResult.status === "excellent" || aiResult.status === "good"
+                          ? <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                          : <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        }
+                        <span className="text-xs font-medium text-gray-900 dark:text-white">
+                          {aiResult.statusLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{aiResult.analysis}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">توصيات AI</p>
+                      <div className="space-y-1.5">
+                        {aiResult.recommendations?.map((rec: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-800/30">
+                            <Lightbulb className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                            <span className="text-xs text-gray-700 dark:text-gray-300">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {aiResult.strategicTip && (
+                      <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-100 dark:border-purple-800/30">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                          <p className="text-xs font-semibold text-gray-900 dark:text-white">نصيحة استراتيجية</p>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{aiResult.strategicTip}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!aiResult && !aiLoading && !aiError && (
+                  <p className="text-xs text-gray-400 text-center py-3">
+                    اضغط على "حلل بالذكاء الاصطناعي" عشان تحليل أعمق باستخدام Gemini
+                  </p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -514,7 +618,7 @@ export default function BrandDetailPage() {
                   { key: "profit", label: "الأرباح", value: formatCurrency(metrics.profit, currency), rawValue: metrics.profit, icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/10" },
                 ].map((s) => {
                   const analysis = getMetricAnalysis(s.key, s.rawValue, (v: number) => formatCurrency(v, currency))
-                  const cardMetric = { ...s, analysis }
+                  const cardMetric = { ...s, analysis, _currency: currency }
                   return (
                     <motion.div key={s.label} whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedMetric(cardMetric)}
@@ -830,7 +934,7 @@ export default function BrandDetailPage() {
           </div>
         </div>
       </motion.div>
-      <MetricAnalysisModal metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
+      <MetricAnalysisModal metric={selectedMetric} onClose={() => setSelectedMetric(null)} brand={brand} />
     </DashboardLayout>
   )
 }
