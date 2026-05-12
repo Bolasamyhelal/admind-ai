@@ -8,7 +8,7 @@ import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { useAuth } from "@/context/auth-context"
 import { formatCurrency } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Store, TrendingUp, DollarSign, Eye } from "lucide-react"
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null)
@@ -84,6 +84,33 @@ export default function DashboardPage() {
                 </motion.div>
               ))}
             </div>
+
+            {/* Brands Overview */}
+            {data?.brands?.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">البراندات</h2>
+                  <button onClick={() => router.push("/dashboard/brands")} className="text-xs text-purple-600 hover:text-purple-700">عرض الكل</button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                  {data.brands.map((brand: any) => (
+                    <motion.div key={brand.id} whileHover={{ scale: 1.02 }}
+                      onClick={() => router.push(`/dashboard/brands/${brand.id}`)}
+                      className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 cursor-pointer hover:border-purple-400 dark:hover:border-purple-600 transition-all"
+                    >
+                      <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 mb-2 w-fit">
+                        <Store className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{brand.name}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-1">
+                        {brand.niche && <span>{brand.niche}</span>}
+                        {brand.monthlyBudget && <><span>·</span><DollarSign className="h-3 w-3" /></>}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <div className="lg:col-span-2">

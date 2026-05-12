@@ -12,7 +12,7 @@ import {
 } from "lucide-react"
 
 interface Campaign {
-  id: string; name: string; clientName: string; brand: string
+  id: string; name: string; clientName: string; brandName: string
   platform: string; goal: string; totalBudget: number; dailyBudget: number
   startDate: string; endDate: string; status: string; notes: string
   totalSpend: number; logCount: number; createdAt: string
@@ -103,7 +103,7 @@ export default function CampaignExecPage() {
             (() => {
               const groups: Record<string, Campaign[]> = {}
               campaigns.forEach((c) => {
-                const key = c.brand || c.clientName || "أخرى"
+                const key = c.brandName || c.clientName || "أخرى"
                 if (!groups[key]) groups[key] = []
                 groups[key].push(c)
               })
@@ -111,7 +111,7 @@ export default function CampaignExecPage() {
                 <div key={brand} className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
-                      {items[0].brand ? <Target className="h-4 w-4 text-purple-600" /> : <Building2 className="h-4 w-4 text-purple-600" />}
+                      {items[0].brandName ? <Target className="h-4 w-4 text-purple-600" /> : <Building2 className="h-4 w-4 text-purple-600" />}
                     </div>
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">{brand}</h2>
                     <span className="text-xs text-gray-400">({items.length} {items.length === 1 ? "حملة" : "حملات"})</span>
@@ -130,7 +130,7 @@ export default function CampaignExecPage() {
                           <span className="text-[10px] text-gray-400">{c.platform}</span>
                         </div>
                         <h3 className="font-bold text-gray-900 dark:text-white mb-1">{c.name}</h3>
-                        <p className="text-xs text-gray-500 mb-3">{c.clientName}{c.brand ? ` · ${c.brand}` : ""}</p>
+                        <p className="text-xs text-gray-500 mb-3">{c.clientName}{c.brandName ? ` · ${c.brandName}` : ""}</p>
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <span>💰 {c.currency || "USD"} {c.totalSpend.toLocaleString()} / {c.totalBudget.toLocaleString()}</span>
                           <span>📅 {c.logCount} يوم</span>
@@ -169,7 +169,7 @@ function SummaryCard({ icon: Icon, label, value }: { icon: any; label: string; v
 }
 
 function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-  const [form, setForm] = useState({ name: "", clientName: "", brand: "", currency: "USD", platform: "فيسبوك/إنستغرام", goal: "تحويلات", totalBudget: "1000", dailyBudget: "50", startDate: new Date().toISOString().split("T")[0], endDate: "", notes: "" })
+  const [form, setForm] = useState({ name: "", clientName: "", brandName: "", currency: "USD", platform: "فيسبوك/إنستغرام", goal: "تحويلات", totalBudget: "1000", dailyBudget: "50", startDate: new Date().toISOString().split("T")[0], endDate: "", notes: "" })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState("")
 
@@ -196,7 +196,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
           <InputField label="اسم الحملة" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <div className="grid grid-cols-2 gap-3">
             <InputField label="اسم العميل" value={form.clientName} onChange={(v) => setForm({ ...form, clientName: v })} />
-            <InputField label="البراند" value={form.brand} onChange={(v) => setForm({ ...form, brand: v })} />
+            <InputField label="البراند" value={form.brandName} onChange={(v) => setForm({ ...form, brandName: v })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <SelectField label="المنصة" value={form.platform} onChange={(v) => setForm({ ...form, platform: v })} options={["فيسبوك/إنستغرام", "تيك توك", "جوجل إعلانات", "سناب شات", "تويتر/X", "جميع المنصات"]} />
@@ -312,7 +312,7 @@ function CampaignDetail({ campaign, dailyLogs, onLogAdded, onStatusChange, onDel
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{campaign.name}</h2>
               <span className={`px-2 py-0.5 rounded-full text-[10px] ${campaign.status === "active" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : campaign.status === "paused" ? "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{campaign.status === "active" ? "نشط" : campaign.status === "paused" ? "موقف" : "منتهي"}</span>
             </div>
-            <p className="text-sm text-gray-500">{campaign.clientName}{campaign.brand ? ` · ${campaign.brand}` : ""} · {campaign.platform} · {campaign.goal} · {cur}</p>
+            <p className="text-sm text-gray-500">{campaign.clientName}{campaign.brandName ? ` · ${campaign.brandName}` : ""} · {campaign.platform} · {campaign.goal} · {cur}</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={endCampaign} className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">{campaign.status === "active" ? "إنهاء الحملة" : "إعادة فتح"}</button>

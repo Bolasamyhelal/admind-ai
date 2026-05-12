@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
     const exec = await prisma.campaignExecution.create({
       data: {
-        name: body.name, clientName: body.clientName, brand: body.brand || "",
+        name: body.name, clientName: body.clientName, brandName: body.brandName || "",
         platform: body.platform, goal: body.goal,
         currency: body.currency || "USD",
         totalBudget: parseFloat(body.totalBudget) || 0,

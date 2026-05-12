@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Brain,
+  Store,
   Image,
   Search,
   Compass,
@@ -28,6 +29,7 @@ import { Separator } from "@/components/ui/separator"
 const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "المهام اليومية", href: "/dashboard/tasks", icon: ListChecks },
+  { label: "البراندات", href: "/dashboard/brands", icon: Store },
   { label: "الكريتيف", href: "/dashboard/creatives", icon: Image },
   { label: "محلل المواقع", href: "/dashboard/site-analyzer", icon: Search },
   { label: "أبحاث النيتش", href: "/dashboard/niche-research", icon: Compass },

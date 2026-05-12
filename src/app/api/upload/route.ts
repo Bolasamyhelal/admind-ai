@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     const niche = (formData.get("niche") as string) || ""
     const country = (formData.get("country") as string) || ""
     const currency = (formData.get("currency") as string) || "USD"
+    const brandId = (formData.get("brandId") as string) || null
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
         campaignName,
         status: "processing",
         userId,
+        brandId,
         niche,
         country,
       },
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
           status: "completed",
           userId,
           uploadId: upload.id,
+          brandId,
           rawData: JSON.stringify({ fileName: file.name, platform }),
         },
       })
