@@ -38,6 +38,7 @@ const navItems = [
   { label: "محلل المواقع", href: "/dashboard/site-analyzer", icon: Search },
   { label: "أبحاث النيتش", href: "/dashboard/niche-research", icon: Compass },
   { label: "فرص النمو", href: "/dashboard/opportunities", icon: Rocket },
+  { label: "لوحة القرارات", href: "/dashboard/decisions", icon: Brain },
   { label: "مستشار الحملات", href: "/dashboard/campaign-guide", icon: Lightbulb },
   { label: "أبحاث العملاء", href: "/dashboard/client-research", icon: Building2 },
   { label: "منفذ الحملات", href: "/dashboard/campaign-exec", icon: Play },
