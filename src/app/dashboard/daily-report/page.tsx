@@ -9,14 +9,13 @@ import {
   Loader2, FileText, Download, Sparkles, Upload, BarChart3,
   Rocket, AlertTriangle, CheckCircle2, Clock, TrendingUp,
   DollarSign, Target, Store, Brain, ChevronRight, Sun,
-  Eye, MousePointerClick,
+  Eye, MousePointerClick, Lightbulb, TrendingDown,
 } from "lucide-react"
 
 export default function DailyReportPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
-  const [manusLoading, setManusLoading] = useState(false)
   const reportRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
 
@@ -57,35 +56,28 @@ export default function DailyReportPage() {
     setExporting(false)
   }
 
-  const generateWithManus = async () => {
-    setManusLoading(true)
-    try {
-      const res = await fetch("/api/manus-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportData: data }),
-      })
-      const result = await res.json()
-      if (result.url) window.open(result.url, "_blank")
-      else alert("تم إرسال التقرير إلى Manus AI — هيصلك إشعار لما يجهز")
-    } catch {
-      alert("فشل الاتصال بـ Manus AI — تأكد من مفتاح API")
-    }
-    setManusLoading(false)
-  }
-
   const s = data?.summary || {}
   const a = data?.allTime || {}
   const today = new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+  const todayArr = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
 
-  const activityFeed = [
-    ...(data?.todaysUploads || []).map((u: any) => ({ type: "upload", label: "رفع تقرير", desc: u.fileName, sub: u.platform, time: new Date(u.createdAt).toLocaleTimeString("ar-EG") })),
-    ...(data?.todaysAnalyses || []).map((a: any) => ({ type: "analysis", label: "تحليل", desc: a.title, sub: a.level, time: new Date(a.createdAt).toLocaleTimeString("ar-EG") })),
-    ...(data?.todaysCampaigns || []).map((c: any) => ({ type: "campaign", label: "إطلاق حملة", desc: c.name, sub: c.platform, time: new Date(c.createdAt).toLocaleTimeString("ar-EG") })),
-    ...(data?.alerts || []).map((a: any) => ({ type: "alert", label: a.type === "critical" ? "تنبيه" : "ملاحظة", desc: a.message, sub: a.severity, time: new Date(a.createdAt).toLocaleTimeString("ar-EG") })),
-  ].sort((a: any, b: any) => b.time.localeCompare(a.time))
+  const campaigns = data?.todaysCampaigns || []
+  const uploads = data?.todaysUploads || []
+  const alerts = data?.alerts || []
 
-  const iconMap: Record<string, any> = { upload: Upload, analysis: BarChart3, campaign: Rocket, alert: AlertTriangle }
+  // Smart insights based on data
+  const insights: string[] = []
+  if (campaigns.length > 0) insights.push(`تم إطلاق ${campaigns.length} حملة${campaigns.length > 1 ? "ات" : ""} جديدة اليوم`)
+  if (uploads.length > 0) insights.push(`تم رفع ${uploads.length} تقرير${uploads.length > 1 ? "" : ""} لتحليل الأداء`)
+  if (s.roasToday >= 2) insights.push(`ROAS ${s.roasToday.toFixed(2)}x — أداء ممتاز، حملاتك تحقق عائد قوي`)
+  else if (s.roasToday >= 1) insights.push(`ROAS ${s.roasToday.toFixed(2)}x — أداء جيد، في فرصة للتحسين`)
+  if (s.profitToday > 0) insights.push(`حققت أرباح ${formatCurrency(s.profitToday, "USD")} اليوم`)
+  if (alerts.filter((a: any) => a.severity === "critical").length > 0) insights.push(`في ${alerts.filter((a: any) => a.severity === "critical").length} تنبيه حرج يحتاج متابعة`)
+
+  const uploadsByPlatform = uploads.reduce((acc: Record<string, number>, u: any) => {
+    acc[u.platform] = (acc[u.platform] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   return (
     <DashboardLayout>
@@ -99,20 +91,12 @@ export default function DailyReportPage() {
             </div>
             <p className="text-sm text-gray-500">{today}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={generateWithManus} disabled={manusLoading || !data}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2.5 text-sm font-medium hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-500/20"
-            >
-              {manusLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Manus AI Report
-            </button>
-            <button onClick={downloadPDF} disabled={exporting || !data}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all disabled:opacity-50"
-            >
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              {exporting ? "جارٍ التحميل..." : "PDF"}
-            </button>
-          </div>
+          <button onClick={downloadPDF} disabled={exporting || !data}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 text-sm font-medium hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-purple-500/20"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {exporting ? "جارٍ التحميل..." : "تحميل التقرير PDF"}
+          </button>
         </div>
 
         {loading ? (
@@ -124,62 +108,102 @@ export default function DailyReportPage() {
           </div>
         ) : (
           <div ref={reportRef} className="space-y-6" dir="rtl">
-            {/* Premium Report Card */}
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-950 to-purple-950/50 overflow-hidden shadow-2xl shadow-purple-500/10">
-              {/* Decorative header */}
-              <div className="relative h-2 bg-gradient-to-l from-purple-600 via-pink-500 to-indigo-600" />
-              <div className="p-6 md:p-8">
-                {/* Top section */}
-                <div className="flex items-start justify-between mb-8">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="relative">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg">
-                          <Brain className="h-5 w-5 text-white" />
-                        </div>
-                        <motion.div className="absolute -inset-1 rounded-xl bg-purple-500/20 blur-md" animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
+            {/* ====== PREMIUM CLIENT REPORT CARD ====== */}
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-950 to-indigo-950/50 overflow-hidden shadow-2xl shadow-purple-500/10">
+              {/* Animated gradient top bar */}
+              <div className="relative h-2 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-l from-purple-600 via-pink-500 via-indigo-500 to-purple-600 bg-[length:200%_100%] animate-[gradientMove_3s_linear_infinite]" />
+              </div>
+
+              <div className="p-6 md:p-10">
+                {/* ===== HEADER ===== */}
+                <div className="flex items-center justify-between mb-10">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30">
+                        <Brain className="h-6 w-6 text-white" />
                       </div>
-                      <div className="mr-3">
-                        <h2 className="text-lg font-bold text-white">AdMind AI</h2>
-                        <p className="text-[10px] text-gray-400">Performance Report</p>
-                      </div>
+                      <motion.div
+                        className="absolute -inset-1.5 rounded-2xl bg-purple-500/20 blur-lg"
+                        animate={{ opacity: [0.2, 0.5, 0.2] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      />
+                    </div>
+                    <div className="mr-3">
+                      <h2 className="text-xl font-bold text-white">AdMind AI</h2>
+                      <p className="text-[11px] text-gray-400">تقرير أداء — {todayArr}</p>
                     </div>
                   </div>
                   <div className="text-left">
-                    <p className="text-xs text-gray-500">تقرير</p>
-                    <p className="text-sm font-bold text-white">{new Date().toLocaleDateString("ar-EG")}</p>
+                    <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-2">
+                      <p className="text-[9px] text-gray-500">تقرير</p>
+                      <p className="text-sm font-bold text-white">يومي</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Summary Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                {/* ===== HERO: Big numbers ===== */}
+                <div className="text-center mb-10">
+                  <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}>
+                    <p className="text-5xl md:text-6xl font-bold bg-gradient-to-l from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent mb-2">
+                      {s.uploadsToday + s.analysesToday + s.campaignsToday}
+                    </p>
+                    <p className="text-sm text-gray-400">إجراء تم اليوم لتحسين أدائك</p>
+                  </motion.div>
+                </div>
+
+                {/* ===== INSIGHTS ===== */}
+                {insights.length > 0 && (
+                  <div className="rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20 p-5 mb-8">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="h-4 w-4 text-purple-400" />
+                      <h3 className="text-sm font-bold text-white">أبرز ما تم اليوم</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {insights.map((insight, i) => (
+                        <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+                          className="flex items-center gap-2"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
+                          <p className="text-sm text-gray-300">{insight}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ===== STATS GRID ===== */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   {[
-                    { label: "التقارير المرفوعة", value: s.uploadsToday, icon: Upload, color: "from-blue-500 to-cyan-500" },
-                    { label: "التحليلات", value: s.analysesToday, icon: BarChart3, color: "from-purple-500 to-pink-500" },
-                    { label: "الحملات المنطلقة", value: s.campaignsToday, icon: Rocket, color: "from-orange-500 to-red-500" },
-                    { label: "التنبيهات", value: s.alertsToday, icon: AlertTriangle, color: "from-yellow-500 to-amber-500" },
+                    { label: "حملات منطلقة", value: s.campaignsToday, icon: Rocket, color: "from-orange-500 to-red-500", desc: "حملات إعلانية جديدة" },
+                    { label: "تقارير مرفوعة", value: s.uploadsToday, icon: Upload, color: "from-blue-500 to-cyan-500", desc: "تحليل أداء وبيانات" },
+                    { label: "تحليلات", value: s.analysesToday, icon: BarChart3, color: "from-purple-500 to-pink-500", desc: "تحليل متقدم للبيانات" },
+                    { label: "ROAS", value: `${(s.roasToday || 0).toFixed(2)}x`, icon: TrendingUp, color: s.roasToday >= 2 ? "from-green-500 to-emerald-500" : "from-yellow-500 to-amber-500", desc: "العائد على الإنفاق" },
                   ].map((stat, i) => (
-                    <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                      className="rounded-xl bg-white/5 border border-white/10 p-4"
+                    <motion.div key={stat.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                      className="rounded-xl bg-white/5 border border-white/10 p-5 hover:bg-white/[0.07] transition-colors"
                     >
-                      <div className={cn("w-fit p-2 rounded-lg bg-gradient-to-br mb-2", stat.color)}>
-                        <stat.icon className="h-4 w-4 text-white" />
+                      <div className={cn("w-fit p-2.5 rounded-xl bg-gradient-to-br mb-3 shadow-lg", stat.color)}>
+                        <stat.icon className="h-5 w-5 text-white" />
                       </div>
-                      <p className="text-2xl font-bold text-white">{stat.value}</p>
-                      <p className="text-[10px] text-gray-400">{stat.label}</p>
+                      <p className="text-2xl font-bold text-white mb-0.5">{stat.value}</p>
+                      <p className="text-xs font-medium text-gray-300">{stat.label}</p>
+                      <p className="text-[9px] text-gray-500 mt-0.5">{stat.desc}</p>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* KPI Row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {/* ===== KPI ROW ===== */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                   {[
-                    { label: "الإنفاق", value: formatCurrency(s.spendToday || 0, "USD"), icon: DollarSign },
-                    { label: "الإيرادات", value: formatCurrency(s.revenueToday || 0, "USD"), icon: TrendingUp },
-                    { label: "ROAS", value: `${(s.roasToday || 0).toFixed(2)}x`, icon: Target },
-                    { label: "الأرباح", value: formatCurrency(s.profitToday || 0, "USD"), icon: DollarSign },
+                    { label: "إجمالي الإنفاق", value: formatCurrency(s.spendToday || 0, "USD"), icon: DollarSign, change: null },
+                    { label: "الإيرادات", value: formatCurrency(s.revenueToday || 0, "USD"), icon: TrendingUp, change: "up" },
+                    { label: "الأرباح", value: formatCurrency(s.profitToday || 0, "USD"), icon: TrendingUp, change: s.profitToday > 0 ? "up" : "down" },
+                    { label: "البراندات النشطة", value: a.activeBrands, icon: Store, change: null },
                   ].map((kpi, i) => (
-                    <div key={kpi.label} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 p-3">
+                    <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
+                      className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 p-3"
+                    >
                       <div className="p-2 rounded-lg bg-purple-500/20">
                         <kpi.icon className="h-4 w-4 text-purple-400" />
                       </div>
@@ -187,73 +211,89 @@ export default function DailyReportPage() {
                         <p className="text-sm font-bold text-white">{kpi.value}</p>
                         <p className="text-[10px] text-gray-400">{kpi.label}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
-                {/* All-time stats */}
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4 mb-8">
-                  <h3 className="text-xs font-bold text-gray-300 mb-3 flex items-center gap-2">
-                    <Sun className="h-3 w-3 text-purple-400" />
-                    إحصائيات شاملة
+                {/* ===== CAMPAIGNS SECTION ===== */}
+                {campaigns.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                      <Rocket className="h-4 w-4 text-orange-400" />
+                      الحملات المنطلقة اليوم
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {campaigns.map((c: any, i: number) => (
+                        <motion.div key={c.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                          className="rounded-xl bg-white/5 border border-white/10 p-4"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-bold text-white">{c.name}</p>
+                            <span className={cn(
+                              "text-[9px] px-2 py-0.5 rounded-full",
+                              c.status === "active" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"
+                            )}>{c.status === "active" ? "نشطة" : c.status}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                            <span>{c.platform}</span>
+                            {c.goal && <><span>·</span><span>{c.goal}</span></>}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ===== UPLOADS BY PLATFORM ===== */}
+                {Object.keys(uploadsByPlatform).length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-blue-400" />
+                      التقارير المرفوعة
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(uploadsByPlatform).map(([platform, count]) => (
+                        <div key={platform} className="rounded-xl bg-white/5 border border-white/10 px-4 py-2 flex items-center gap-2">
+                          <span className="text-lg font-bold text-white">{count}</span>
+                          <span className="text-xs text-gray-400">{platform}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ===== NEXT STEPS ===== */}
+                <div className="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 p-5 mb-8">
+                  <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-indigo-400" />
+                    الخطوات القادمة
                   </h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: "إجمالي البراندات", value: a.totalBrands },
-                      { label: "البراندات النشطة", value: a.activeBrands },
-                      { label: "إجمالي الحملات", value: a.totalCampaigns },
-                    ].map((stat, i) => (
-                      <div key={stat.label}>
-                        <p className="text-lg font-bold text-white">{stat.value}</p>
-                        <p className="text-[10px] text-gray-400">{stat.label}</p>
+                  <div className="space-y-2">
+                    {s.roasToday < 2 && (
+                      <div className="flex items-start gap-2">
+                        <ChevronRight className="h-3.5 w-3.5 text-purple-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-gray-300">تحسين ROAS — مراجعة الحملات الحالية وتحسين الاستهداف</p>
                       </div>
-                    ))}
+                    )}
+                    {campaigns.length === 0 && (
+                      <div className="flex items-start gap-2">
+                        <ChevronRight className="h-3.5 w-3.5 text-purple-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-gray-300">إطلاق حملات جديدة — استغلال الفرص المتاحة في السوق</p>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2">
+                      <ChevronRight className="h-3.5 w-3.5 text-purple-400 mt-0.5 shrink-0" />
+                      <p className="text-xs text-gray-300">متابعة أداء الحملات الحالية وتحسين الكريتيف</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Activity Timeline */}
-                <div>
-                  <h3 className="text-xs font-bold text-gray-300 mb-3 flex items-center gap-2">
-                    <Clock className="h-3 w-3 text-purple-400" />
-                    نشاط اليوم
-                  </h3>
-                  {activityFeed.length === 0 ? (
-                    <p className="text-xs text-gray-500 text-center py-6">لا يوجد نشاط اليوم</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {activityFeed.slice(0, 10).map((item: any, i: number) => {
-                        const Icon = iconMap[item.type] || CheckCircle2
-                        const colors: Record<string, string> = {
-                          upload: "bg-blue-500/20 text-blue-400",
-                          analysis: "bg-purple-500/20 text-purple-400",
-                          campaign: "bg-orange-500/20 text-orange-400",
-                          alert: item.sub === "critical" ? "bg-red-500/20 text-red-400" : "bg-yellow-500/20 text-yellow-400",
-                        }
-                        return (
-                          <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                            className="flex items-center gap-3 p-2.5 rounded-lg bg-white/5 border border-white/5"
-                          >
-                            <div className={cn("p-1.5 rounded-lg", colors[item.type] || "bg-gray-500/20 text-gray-400")}>
-                              <Icon className="h-3 w-3" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-white truncate">{item.desc}</p>
-                              <p className="text-[10px] text-gray-500">{item.sub}</p>
-                            </div>
-                            <span className="text-[9px] text-gray-500 shrink-0">{item.time}</span>
-                          </motion.div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between">
+                {/* ===== FOOTER ===== */}
+                <div className="pt-6 border-t border-white/10 flex items-center justify-between">
                   <p className="text-[9px] text-gray-500">تم إنشاؤه بواسطة AdMind AI · {new Date().toLocaleString("ar-EG")}</p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <Brain className="h-3 w-3 text-purple-400" />
-                    <span className="text-[9px] text-gray-400">AdMind AI</span>
+                    <span className="text-[10px] text-gray-400 font-medium">AdMind AI</span>
                   </div>
                 </div>
               </div>
