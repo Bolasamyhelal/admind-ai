@@ -126,6 +126,26 @@ ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { id, userId, timezone } = body
+    if (!id || !userId) return NextResponse.json({ error: "id and userId required" }, { status: 400 })
+
+    const brand = await prisma.brand.findFirst({ where: { id, userId } })
+    if (!brand) return NextResponse.json({ error: "Brand not found" }, { status: 404 })
+
+    const updated = await prisma.brand.update({
+      where: { id },
+      data: { ...(timezone !== undefined && { timezone }) },
+    })
+    return NextResponse.json({ success: true, brand: updated })
+  } catch (error) {
+    console.error("Brand update error:", error)
+    return NextResponse.json({ error: "Failed to update brand" }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)

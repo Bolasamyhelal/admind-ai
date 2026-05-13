@@ -11,7 +11,7 @@ import {
   BarChart3, Image, Play, Download, ExternalLink, Sparkles,
   Users, Monitor, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
   Layers, ChevronDown, FileText, Clock, Percent, Activity, X, Info,
-  Lightbulb, AlertTriangle, CheckCircle, TrendingDown,
+  Lightbulb, AlertTriangle, CheckCircle, TrendingDown, Clock3,
 } from "lucide-react"
 
 const LEVELS = [
@@ -377,6 +377,7 @@ export default function BrandDetailPage() {
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [goalForm, setGoalForm] = useState({ metricKey: "roas", metricLabel: "ROAS", targetValue: "", period: "monthly" })
   const [savingGoal, setSavingGoal] = useState(false)
+  const [tzTime, setTzTime] = useState("")
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -418,6 +419,27 @@ export default function BrandDetailPage() {
       .then((d) => setBrandGoals(d.goals || []))
       .catch(() => {})
   }, [brandId])
+
+  // Live clock for brand timezone
+  useEffect(() => {
+    if (!brand?.timezone) return
+    const fmt = (d: Date) => d.toLocaleTimeString("ar-EG", { timeZone: brand.timezone, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
+    setTzTime(fmt(new Date()))
+    const iv = setInterval(() => setTzTime(fmt(new Date())), 1000)
+    return () => clearInterval(iv)
+  }, [brand?.timezone])
+
+  const updateTimezone = async (tz: string) => {
+    if (!brand || !user) return
+    try {
+      await fetch("/api/brands", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: brand.id, userId: user.id, timezone: tz }),
+      })
+      setBrand({ ...brand, timezone: tz })
+    } catch {}
+  }
 
   const addGoal = async () => {
     if (!goalForm.targetValue.trim() || !brandId) return
@@ -938,6 +960,53 @@ export default function BrandDetailPage() {
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{item.value}</p>
                     </div>
                   ) : null)}
+                  {/* Timezone */}
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-100 dark:border-indigo-800/30 col-span-2 sm:col-span-1">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Clock3 className="h-3 w-3 text-indigo-500" />
+                      <span className="text-[10px] text-gray-400">المنطقة الزمنية</span>
+                    </div>
+                    <select value={brand.timezone || ""} onChange={(e) => updateTimezone(e.target.value)}
+                      className="w-full text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-gray-900 dark:text-white"
+                    >
+                      <option value="">اختر المنطقة</option>
+                      <option value="America/Araguaina">GMT-3 (America/Araguaina)</option>
+                      <option value="America/New_York">GMT-5 (New York)</option>
+                      <option value="America/Chicago">GMT-6 (Chicago)</option>
+                      <option value="America/Denver">GMT-7 (Denver)</option>
+                      <option value="America/Los_Angeles">GMT-8 (Los Angeles)</option>
+                      <option value="America/Sao_Paulo">GMT-3 (Sao Paulo)</option>
+                      <option value="Europe/London">GMT+0 (London)</option>
+                      <option value="Europe/Paris">GMT+1 (Paris)</option>
+                      <option value="Europe/Istanbul">GMT+3 (Istanbul)</option>
+                      <option value="Asia/Dubai">GMT+4 (Dubai)</option>
+                      <option value="Asia/Riyadh">GMT+3 (Riyadh)</option>
+                      <option value="Asia/Qatar">GMT+3 (Qatar)</option>
+                      <option value="Asia/Kuwait">GMT+3 (Kuwait)</option>
+                      <option value="Asia/Baghdad">GMT+3 (Baghdad)</option>
+                      <option value="Asia/Cairo">GMT+2 (Cairo)</option>
+                      <option value="Africa/Cairo">GMT+2 (Cairo)</option>
+                      <option value="Asia/Amman">GMT+3 (Amman)</option>
+                      <option value="Asia/Beirut">GMT+2 (Beirut)</option>
+                      <option value="Asia/Jerusalem">GMT+2 (Jerusalem)</option>
+                      <option value="Asia/Karachi">GMT+5 (Karachi)</option>
+                      <option value="Asia/Kolkata">GMT+5:30 (Kolkata)</option>
+                      <option value="Asia/Bangkok">GMT+7 (Bangkok)</option>
+                      <option value="Asia/Shanghai">GMT+8 (Shanghai)</option>
+                      <option value="Asia/Tokyo">GMT+9 (Tokyo)</option>
+                      <option value="Australia/Sydney">GMT+11 (Sydney)</option>
+                      <option value="Pacific/Auckland">GMT+12 (Auckland)</option>
+                      <option value="UTC">UTC+0</option>
+                    </select>
+                    {brand.timezone && tzTime && (
+                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1.5 text-center" dir="ltr">
+                        {tzTime}
+                      </p>
+                    )}
+                    {!brand.timezone && (
+                      <p className="text-[10px] text-gray-400 mt-1">حدد المنطقة الزمنية للبراند</p>
+                    )}
+                  </div>
                 </div>
                 {brand.notes && (
                   <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800">
