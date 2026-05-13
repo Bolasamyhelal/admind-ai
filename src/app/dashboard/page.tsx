@@ -72,7 +72,7 @@ export default function DashboardPage() {
                 <Building2 className="h-5 w-5 text-purple-200" />
                 <span className="text-xs font-medium text-purple-200 tracking-wider uppercase">Agency Dashboard</span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">ConvertX Agency</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">AdMind AI</h1>
               <p className="text-purple-200 text-sm">Performance Marketing Platform</p>
             </div>
             <div className="hidden md:flex items-center gap-3">
