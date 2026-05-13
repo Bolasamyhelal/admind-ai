@@ -23,6 +23,8 @@ import {
   ListChecks,
   FolderOpen,
   MessageSquare,
+  BookOpen,
+  Rocket,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -35,11 +37,13 @@ const navItems = [
   { label: "ملفات البراندات", href: "/dashboard/brand-media", icon: FolderOpen },
   { label: "محلل المواقع", href: "/dashboard/site-analyzer", icon: Search },
   { label: "أبحاث النيتش", href: "/dashboard/niche-research", icon: Compass },
+  { label: "فرص النمو", href: "/dashboard/opportunities", icon: Rocket },
   { label: "مستشار الحملات", href: "/dashboard/campaign-guide", icon: Lightbulb },
   { label: "أبحاث العملاء", href: "/dashboard/client-research", icon: Building2 },
   { label: "منفذ الحملات", href: "/dashboard/campaign-exec", icon: Play },
   { label: "رفع تقارير", href: "/dashboard/upload", icon: Upload },
   { label: "التقارير", href: "/dashboard/reports", icon: BarChart3 },
+  { label: "قاموس الميتركس", href: "/dashboard/glossary", icon: BookOpen },
   { label: "الإعدادات", href: "/dashboard/settings", icon: Settings },
 ]
 
