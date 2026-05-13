@@ -3,11 +3,9 @@
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { cn } from "@/lib/utils"
 import {
   Loader2, FileText, Download, Sparkles, Plus, Trash2,
-  Brain, Clock, ChevronRight, Lightbulb, CheckCircle2,
-  Edit3, Wand2, MessageSquare,
+  Brain, CheckCircle2, Edit3, Wand2, MessageSquare,
 } from "lucide-react"
 
 interface Entry {
@@ -232,17 +230,20 @@ export default function DailyReportPage() {
                       </div>
                     )}
 
-                    {/* AI Formatted Content */}
+                    {/* AI Formatted Content — structured blocks */}
                     <div className="rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20 p-6 mb-6">
                       <div className="flex items-center gap-2 mb-4">
-                        <Sparkles className="h-4 w-4 text-purple-400" />
-                        <h3 className="text-sm font-bold text-white">تقرير الأداء اليومي</h3>
+                        <FileText className="h-4 w-4 text-purple-400" />
+                        <h3 className="text-sm font-bold text-white">التقرير التنفيذي</h3>
                       </div>
-                      <div className="prose prose-invert prose-sm max-w-none">
-                        {formattedReport.split("\n").map((line, i) => (
-                          line.trim() ? (
-                            <p key={i} className="text-sm text-gray-200 leading-relaxed mb-3">{line}</p>
-                          ) : <br key={i} />
+                      <div className="space-y-3">
+                        {formattedReport.split("\n").filter(l => l.trim()).map((line, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <div className="flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-[10px] font-bold text-white shrink-0 mt-0.5">
+                              {i + 1}
+                            </div>
+                            <p className="text-sm text-gray-200 leading-relaxed">{line}</p>
+                          </div>
                         ))}
                       </div>
                     </div>
