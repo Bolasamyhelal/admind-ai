@@ -129,7 +129,7 @@ ${Object.entries(answers || {}).map(([q, a]) => `- ${q}: ${a}`).join("\n")}
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
-    const { id, userId, timezone } = body
+    const { id, userId, timezone, adTimezone } = body
     if (!id || !userId) return NextResponse.json({ error: "id and userId required" }, { status: 400 })
 
     const brand = await prisma.brand.findFirst({ where: { id, userId } })
@@ -137,7 +137,10 @@ export async function PUT(req: NextRequest) {
 
     const updated = await prisma.brand.update({
       where: { id },
-      data: { ...(timezone !== undefined && { timezone }) },
+      data: {
+        ...(timezone !== undefined && { timezone }),
+        ...(adTimezone !== undefined && { adTimezone }),
+      },
     })
     return NextResponse.json({ success: true, brand: updated })
   } catch (error) {

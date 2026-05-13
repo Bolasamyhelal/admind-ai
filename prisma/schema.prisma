@@ -49,6 +49,7 @@ model Brand {
   niche     String?
   country   String?
   timezone  String?
+  adTimezone String?
   website   String?
   websiteAnalysis String?  // JSON - site analyzer results
   goals     String?         // brand goals (AI onboarding)
