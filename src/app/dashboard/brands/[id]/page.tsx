@@ -379,6 +379,8 @@ export default function BrandDetailPage() {
   const [savingGoal, setSavingGoal] = useState(false)
   const [tzTime, setTzTime] = useState("")
   const [adTzTime, setAdTzTime] = useState("")
+  const [postTime, setPostTime] = useState("12:00")
+  const [convertedTime, setConvertedTime] = useState("")
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
@@ -445,6 +447,29 @@ export default function BrandDetailPage() {
       setBrand({ ...brand, [field]: val })
     } catch {}
   }
+
+  // Convert time between timezones
+  useEffect(() => {
+    if (!brand?.timezone || !brand?.adTimezone || !postTime) return
+    try {
+      const [h, m] = postTime.split(":").map(Number)
+      const now = new Date()
+      const brandOff = now.toLocaleString("en", { timeZone: brand.timezone, timeZoneName: "short" })
+      const adOff = now.toLocaleString("en", { timeZone: brand.adTimezone, timeZoneName: "short" })
+      const brandMatch = brandOff.match(/GMT[+-]\d+/)
+      const adMatch = adOff.match(/GMT[+-]\d+/)
+      if (!brandMatch || !adMatch) return
+      const brandGmt = parseInt(brandMatch[0].replace("GMT", ""))
+      const adGmt = parseInt(adMatch[0].replace("GMT", ""))
+      const diff = brandGmt - adGmt
+      let totalMin = h * 60 + m - diff * 60
+      if (totalMin < 0) totalMin += 1440
+      if (totalMin >= 1440) totalMin -= 1440
+      const convH = Math.floor(totalMin / 60)
+      const convM = totalMin % 60
+      setConvertedTime(`${convH.toString().padStart(2, "0")}:${convM.toString().padStart(2, "0")}`)
+    } catch { setConvertedTime("") }
+  }, [postTime, brand?.timezone, brand?.adTimezone])
 
   // Calculate time difference
   const getTzDiff = () => {
@@ -1043,12 +1068,31 @@ export default function BrandDetailPage() {
                     </div>
                     {/* Time difference + posting tip */}
                     {brand.timezone && brand.adTimezone && tzDiff && (
-                      <div className="mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-800/30">
+                      <div className="mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-800/30 space-y-2">
                         <p className="text-[9px] text-gray-400 mb-0.5">فرق التوقيت</p>
                         <p className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
                           البراند {tzDiff.brandOffset} ← الحساب {tzDiff.adOffset}
                         </p>
-                        <p className="text-[9px] text-gray-400 mt-1">
+
+                        {/* Timezone Converter */}
+                        <div className="pt-2 border-t border-indigo-100 dark:border-indigo-800/30">
+                          <p className="text-[9px] text-gray-400 mb-1.5">🕐 عايز تنزل إعلان في توقيت البراند؟</p>
+                          <div className="flex items-center gap-2">
+                            <input type="time" value={postTime} onChange={(e) => setPostTime(e.target.value)}
+                              className="flex-1 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-gray-900 dark:text-white"
+                            />
+                          </div>
+                          {convertedTime && (
+                            <div className="mt-1.5 flex items-center gap-1.5 text-[10px]">
+                              <span className="text-indigo-600 dark:text-indigo-400 font-medium">{postTime}</span>
+                              <span className="text-gray-400">⬅</span>
+                              <span className="text-amber-600 dark:text-amber-400 font-bold">{convertedTime}</span>
+                              <span className="text-gray-400">بتوقيت الحساب</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="text-[9px] text-gray-400">
                           ⏰ اعرف إن وقت النشر في حساب الإعلانات غير توقيت البراند. نظم جدول النشر حسب توقيت حسابك عشان التحليلات تضبط.
                         </p>
                       </div>
