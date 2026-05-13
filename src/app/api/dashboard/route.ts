@@ -62,6 +62,33 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
 
+    // Per-brand campaign & analysis counts
+    const brandCampaignCounts = await prisma.campaignExecution.groupBy({
+      by: ["brandId"],
+      _count: { id: true },
+      where: { userId, brandId: { not: null } },
+    })
+    const brandAnalysisCounts = await prisma.analysis.groupBy({
+      by: ["brandId"],
+      _count: { id: true },
+      where: { userId, brandId: { not: null } },
+    })
+    const brandUploadCounts = await prisma.upload.groupBy({
+      by: ["brandId"],
+      _count: { id: true },
+      where: { userId, brandId: { not: null } },
+    })
+    const ccMap = Object.fromEntries(brandCampaignCounts.map((b: any) => [b.brandId, b._count.id]))
+    const acMap = Object.fromEntries(brandAnalysisCounts.map((b: any) => [b.brandId, b._count.id]))
+    const ucMap = Object.fromEntries(brandUploadCounts.map((b: any) => [b.brandId, b._count.id]))
+
+    const brandsWithStats = brands.map((b: any) => ({
+      ...b,
+      campaignCount: ccMap[b.id] || 0,
+      analysisCount: acMap[b.id] || 0,
+      uploadCount: ucMap[b.id] || 0,
+    }))
+
     // Group analyses by currency
     const byCurrency: Record<string, any[]> = {}
     for (const a of analyses) {
@@ -95,13 +122,18 @@ export async function GET(req: NextRequest) {
       .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
       .map(([month, d]) => ({ month, spend: d.spend, revenue: d.revenue, roas: d.count > 0 ? +(d.roas / d.count).toFixed(2) : 0, currency: d.currency }))
 
+    const totalCampaigns = brandsWithStats.reduce((s: number, b: any) => s + (b.campaignCount || 0), 0)
+    const totalBrandUploads = brandsWithStats.reduce((s: number, b: any) => s + (b.uploadCount || 0), 0)
+
     return NextResponse.json({
       metricsByCurrency,
       monthlyData,
       totalAnalyses: analyses.length,
       totalUploads: uploads.length,
       totalBrands: brands.length,
-      brands,
+      totalCampaigns,
+      totalBrandUploads,
+      brands: brandsWithStats,
       recentUploads: uploads.slice(0, 5),
       alerts,
     })
