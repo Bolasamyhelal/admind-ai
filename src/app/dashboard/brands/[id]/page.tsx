@@ -11,8 +11,9 @@ import {
   BarChart3, Image, Play, Download, ExternalLink, Sparkles,
   Users, Monitor, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
   Layers, ChevronDown, FileText, Clock, Percent, Activity, X, Info,
-  Lightbulb, AlertTriangle, CheckCircle, TrendingDown, Clock3,
+  Lightbulb, AlertTriangle, CheckCircle, TrendingDown, Clock3, Brain,
 } from "lucide-react"
+import { AssignmentCard } from "@/components/brand/assignment-card"
 
 const LEVELS = [
   { key: "campaign", label: "الحملات", icon: BarChart3 },
@@ -373,13 +374,11 @@ export default function BrandDetailPage() {
   const [error, setError] = useState("")
   const [selectedCurrency, setSelectedCurrency] = useState("USD")
   const [selectedLevel, setSelectedLevel] = useState("campaign")
-  const [brandTasks, setBrandTasks] = useState<any[]>([])
-  const [showQuickTask, setShowQuickTask] = useState(false)
-  const [quickTaskTitle, setQuickTaskTitle] = useState("")
-  const [savingTask, setSavingTask] = useState(false)
+  const [assignments, setAssignments] = useState<any[]>([])
+  const [assignmentsSummary, setAssignmentsSummary] = useState("")
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false)
   const [showAllUploads, setShowAllUploads] = useState(false)
   const [showAllCampaigns, setShowAllCampaigns] = useState(false)
-  const [showAllTasks, setShowAllTasks] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<any>(null)
   const [brandGoals, setBrandGoals] = useState<any[]>([])
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -417,10 +416,12 @@ export default function BrandDetailPage() {
 
   useEffect(() => {
     if (!brandId) return
-    fetch(`/api/tasks?brandId=${brandId}`)
+    setAssignmentsLoading(true)
+    fetch(`/api/brand-assignments?brandId=${brandId}`)
       .then((r) => r.json())
-      .then((d) => setBrandTasks(d.tasks || []))
+      .then((d) => { setAssignments(d.assignments || []); setAssignmentsSummary(d.summary || "") })
       .catch(() => {})
+      .finally(() => setAssignmentsLoading(false))
   }, [brandId])
 
   useEffect(() => {
@@ -513,34 +514,6 @@ export default function BrandDetailPage() {
     setBrandGoals((prev) => prev.filter((g) => g.id !== id))
   }
 
-  const addQuickTask = async () => {
-    if (!quickTaskTitle.trim() || !user || !brandId) return
-    setSavingTask(true)
-    try {
-      await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: quickTaskTitle.trim(), brandId, taskType: "ad_upload", date: new Date().toISOString().slice(0, 10), userId: user.id }),
-      })
-      const res = await fetch(`/api/tasks?brandId=${brandId}`)
-      const d = await res.json()
-      setBrandTasks(d.tasks || [])
-      setQuickTaskTitle("")
-      setShowQuickTask(false)
-    } catch {} finally { setSavingTask(false) }
-  }
-
-  const toggleTaskStatus = async (task: any) => {
-    await fetch("/api/tasks", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: task.id, status: task.status === "completed" ? "pending" : "completed" }),
-    })
-    const res = await fetch(`/api/tasks?brandId=${brandId}`)
-    const d = await res.json()
-    setBrandTasks(d.tasks || [])
-  }
-
   const handleExport = () => {
     if (!data) return
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
@@ -581,15 +554,15 @@ export default function BrandDetailPage() {
     } catch {}
   }
 
-  const completedTasks = brandTasks.filter((t: any) => t.status === "completed").length
-  const totalTasks = brandTasks.length
-  const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const urgentAssignments = assignments.filter((a: any) => a.priority === "urgent").length
+  const importantAssignments = assignments.filter((a: any) => a.priority === "important").length
+  const totalTasks = assignments.length
+  const completedTasks = assignments.filter((a: any) => a.status === "completed").length
 
   const uploads = data?.uploads || []
   const campaigns = data?.campaigns || []
   const displayUploads = showAllUploads ? uploads : uploads.slice(0, 4)
   const displayCampaigns = showAllCampaigns ? campaigns : campaigns.slice(0, 4)
-  const displayTasks = showAllTasks ? brandTasks : brandTasks.slice(0, 5)
 
   return (
     <DashboardLayout>
@@ -1139,69 +1112,47 @@ export default function BrandDetailPage() {
 
           {/* Right: Sidebar (1/4) */}
           <div className="space-y-4">
-            {/* Tasks Card */}
+            {/* Action Plan Card */}
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
               <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
-                  <ListChecks className="h-4 w-4 text-green-500" />
-                  المهام
+                  <Brain className="h-4 w-4 text-purple-500" />
+                  خطة العمل الذكية
                 </h3>
-                <button onClick={() => setShowQuickTask(true)} className="text-purple-600 hover:text-purple-700 p-1 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
-                  <Plus className="h-4 w-4" />
+                <button onClick={() => { setAssignmentsLoading(true); fetch(`/api/brand-assignments?brandId=${brandId}`).then(r => r.json()).then(d => { setAssignments(d.assignments || []); setAssignmentsSummary(d.summary || "") }).catch(() => {}).finally(() => setAssignmentsLoading(false)) }}
+                  className="text-purple-600 hover:text-purple-700 p-1 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                  <Loader2 className={`h-4 w-4 ${assignmentsLoading ? 'animate-spin' : ''}`} />
                 </button>
               </div>
 
-              {/* Task Progress Bar */}
-              {totalTasks > 0 && (
+              {/* Summary */}
+              {assignmentsSummary && (
                 <div className="px-4 pt-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-gray-400">التقدم</span>
-                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">{completedTasks}/{totalTasks}</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                    <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${taskProgress}%` }} />
-                  </div>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">{assignmentsSummary}</p>
                 </div>
               )}
 
-              <div className="p-4">
-                {showQuickTask && (
-                  <div className="mb-3 flex gap-2">
-                    <input value={quickTaskTitle} onChange={(e) => setQuickTaskTitle(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addQuickTask()}
-                      placeholder="مهمة جديدة..."
-                      className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-xs text-gray-900 dark:text-white placeholder:text-gray-400"
-                      autoFocus
-                    />
-                    <button onClick={addQuickTask} disabled={savingTask || !quickTaskTitle.trim()}
-                      className="px-3 rounded-lg bg-purple-600 text-xs text-white font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                    >
-                      {savingTask ? "..." : "إضافة"}
-                    </button>
-                  </div>
-                )}
-                {displayTasks.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {displayTasks.map((t: any) => (
-                      <div key={t.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                        <button onClick={() => toggleTaskStatus(t)} className="shrink-0">
-                          {t.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-gray-300 dark:text-gray-600" />}
-                        </button>
-                        <span className={`flex-1 text-xs truncate ${t.status === "completed" ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300"}`}>
-                          {t.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400 text-center py-6">لا توجد مهام</p>
-                )}
+              {/* Priority Counts */}
+              {assignments.length > 0 && (
+                <div className="flex gap-2 px-4 pt-3">
+                  {urgentAssignments > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400">{urgentAssignments} عاجل</span>}
+                  {importantAssignments > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">{importantAssignments} مهم</span>}
+                </div>
+              )}
 
-                {brandTasks.length > 5 && (
-                  <button onClick={() => setShowAllTasks(!showAllTasks)} className="w-full mt-2 text-xs text-purple-600 hover:text-purple-700 flex items-center justify-center gap-1 py-1">
-                    {showAllTasks ? "عرض أقل" : `عرض الكل (${brandTasks.length})`}
-                    <ChevronDown className={`h-3 w-3 transition-transform ${showAllTasks ? "rotate-180" : ""}`} />
-                  </button>
+              <div className="p-4 space-y-2">
+                {assignmentsLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                  </div>
+                ) : assignments.length > 0 ? (
+                  assignments.slice(0, 5).map((a: any) => (
+                    <AssignmentCard key={a.id} assignment={a} />
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-400 text-center py-6">
+                    {assignments.length === 0 && !assignmentsLoading ? "ارفع تقارير لتحليل البراند" : "جارٍ التحميل..."}
+                  </p>
                 )}
               </div>
             </div>

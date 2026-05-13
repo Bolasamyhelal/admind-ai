@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import {
   Users, Loader2, Target, DollarSign, Building2, TrendingUp,
   Search, Star, AlertTriangle, CheckCircle2, XCircle, MessageSquare,
-  Phone, Linkedin, Zap, Clock, Trash2, Globe, ShoppingBag, Lightbulb,
+  Phone, Zap, Clock, Trash2, Globe, ShoppingBag, Lightbulb,
   ChevronDown, ChevronUp,
 } from "lucide-react"
 

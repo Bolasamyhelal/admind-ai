@@ -73,7 +73,7 @@ ${Object.entries(metrics).map(([k, v]) => `  - ${k}: ${v}`).join("\n")}
   "timeline": { "immediate": ["..."], "shortTerm": ["..."], "longTerm": ["..."] }
 }`
 
-    const aiResponse = await askGemini(prompt, 0.4, 4096)
+    const aiResponse = await askGemini(prompt)
     
     try {
       const cleaned = aiResponse.replace(/```json\s*/g, "").replace(/```\s*$/g, "").trim()

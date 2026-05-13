@@ -8,14 +8,14 @@ import {
   Plus, Play, Pause, CheckCircle2, X, TrendingUp, DollarSign,
   MousePointerClick, Eye, CalendarDays, Target, Smartphone,
   Loader2, Trash2, BarChart3, Clock, ArrowLeft, ChevronDown, ChevronUp,
-  Building2,
+  Building2, XCircle,
 } from "lucide-react"
 
 interface Campaign {
   id: string; name: string; clientName: string; brandName: string
   platform: string; goal: string; totalBudget: number; dailyBudget: number
   startDate: string; endDate: string; status: string; notes: string
-  totalSpend: number; logCount: number; createdAt: string
+  totalSpend: number; logCount: number; createdAt: string; currency?: string
 }
 
 interface DailyLog {

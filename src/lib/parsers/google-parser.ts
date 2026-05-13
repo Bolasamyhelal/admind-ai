@@ -15,33 +15,92 @@ export interface GoogleRow {
   conversionRate: number
 }
 
-export function parseGoogleReport(buffer: ArrayBuffer, fileName: string): GoogleRow[] {
+function toStr(v: any): string {
+  if (v === null || v === undefined) return ""
+  return String(v).trim()
+}
+
+function cleanNum(v: any): number {
+  const s = toStr(v).replace(/,/g, "").replace(/[^0-9.\-]/g, "")
+  if (!s) return 0
+  const n = parseFloat(s)
+  return isNaN(n) ? 0 : n
+}
+
+function getKeyVariants(key: string): string[] {
+  const lower = key.toLowerCase().trim()
+  const results: string[] = [lower]
+  results.push(lower.replace(/[\s\-_]+/g, ""))
+  const noParen = lower.replace(/\(.*?\)/g, "").trim()
+  if (noParen !== lower) {
+    results.push(noParen)
+    results.push(noParen.replace(/[\s\-_]+/g, ""))
+  }
+  results.push(lower.replace(/[^a-z0-9\u0600-\u06FF]/g, ""))
+  results.push(noParen.replace(/[^a-z0-9\u0600-\u06FF]/g, ""))
+  const firstWord = lower.split(/[\s\-_\(\)]+/)[0]
+  if (firstWord && firstWord !== lower) results.push(firstWord)
+  return [...new Set(results.filter(Boolean))]
+}
+
+const TARGETS: Record<string, string[]> = {
+  campaignName: ["campaign", "campaignname", "campaign_name", "campaign name", "اسم الحملة", "الحملة"],
+  adGroupName: ["adgroup", "ad group", "adgroupname", "ad group name", "ad_group_name", "اسم المجموعة", "المجموعة الإعلانية"],
+  spend: ["cost", "spend", "amountspent", "amount spent", "المصاريف", "الإنفاق", "صرف", "التكلفة"],
+  impressions: ["impressions", "ظهور", "مرات الظهور", "impression"],
+  clicks: ["clicks", "النقرات", "نقرات", "click"],
+  conversions: ["conversions", "results", "تحويلات", "التحويلات", "conversion"],
+  revenue: ["revenue", "conversionvalue", "conversion value", "الإيرادات", "إيرادات"],
+  ctr: ["ctr", "clickthroughrate", "click through rate"],
+  avgCpc: ["avgcpc", "cpc", "avg cpc", "average cpc", "averagecpc"],
+  qualityScore: ["qualityscore", "quality score", "qs"],
+  conversionRate: ["conversionrate", "conversion rate", "convrate"],
+}
+
+function matchHeader(headers: string[], targetKey: string): string {
+  const targetVariants = TARGETS[targetKey] || []
+  for (const header of headers) {
+    const hVariants = getKeyVariants(header)
+    for (const hv of hVariants) {
+      if (targetVariants.includes(hv)) return header
+    }
+  }
+  return ""
+}
+
+export function parseGoogleReport(buffer: ArrayBuffer | Buffer, fileName: string): GoogleRow[] {
+  let rawRows: any[] = []
   if (fileName.endsWith(".csv")) {
     const text = new TextDecoder().decode(buffer)
     const parsed = Papa.parse<any>(text, { header: true })
-    return parsed.data.map(mapGoogleRow)
+    rawRows = parsed.data
+  } else {
+    const workbook = XLSX.read(buffer, { type: "array" })
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    rawRows = XLSX.utils.sheet_to_json<any>(sheet)
+  }
+  if (rawRows.length === 0) return []
+
+  const headers = Object.keys(rawRows[0])
+  const col = (key: string) => matchHeader(headers, key)
+  const get = (row: any, key: string) => {
+    const c = col(key)
+    return c ? row[c] : undefined
   }
 
-  const workbook = XLSX.read(buffer, { type: "array" })
-  const sheet = workbook.Sheets[workbook.SheetNames[0]]
-  const jsonData = XLSX.utils.sheet_to_json<any>(sheet)
-  return jsonData.map(mapGoogleRow)
-}
-
-function mapGoogleRow(row: any): GoogleRow {
-  return {
-    campaignName: row.Campaign || row.campaign || row.CampaignName || "",
-    adGroupName: row["Ad group"] || row.AdGroup || row.ad_group || "",
-    spend: parseFloat(row.Cost || row.cost || row.Spend || 0),
-    impressions: parseInt(row.Impressions || row.impressions || 0),
-    clicks: parseInt(row.Clicks || row.clicks || 0),
-    conversions: parseInt(row.Conversions || row.conversions || 0),
-    revenue: parseFloat(row.Revenue || row.revenue || row.ConversionValue || 0),
-    ctr: parseFloat(row.CTR || row.ctr || 0),
-    avgCpc: parseFloat(row.AvgCPC || row.avg_cpc || row.CPC || 0),
-    qualityScore: parseInt(row.QualityScore || row.quality_score || 0),
-    conversionRate: parseFloat(row.ConversionRate || row.conversion_rate || 0),
-  }
+  return rawRows.map((row) => ({
+    campaignName: toStr(get(row, "campaignName")),
+    adGroupName: toStr(get(row, "adGroupName")),
+    spend: cleanNum(get(row, "spend")),
+    impressions: cleanNum(get(row, "impressions")),
+    clicks: cleanNum(get(row, "clicks")),
+    conversions: cleanNum(get(row, "conversions")),
+    revenue: cleanNum(get(row, "revenue")),
+    ctr: cleanNum(get(row, "ctr")),
+    avgCpc: cleanNum(get(row, "avgCpc")),
+    qualityScore: cleanNum(get(row, "qualityScore")),
+    conversionRate: cleanNum(get(row, "conversionRate")),
+  }))
 }
 
 export function aggregateGoogleData(rows: GoogleRow[]) {

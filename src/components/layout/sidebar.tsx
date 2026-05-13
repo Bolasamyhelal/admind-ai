@@ -5,27 +5,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  LayoutDashboard,
-  Upload,
-  BarChart3,
-  Settings,
-  PanelLeftClose,
-  PanelLeft,
-  Brain,
-  Store,
-  Search,
-  Compass,
-  Lightbulb,
-  Building2,
-  Play,
-  ListChecks,
-  FolderOpen,
-  BookOpen,
-  Rocket,
+  LayoutDashboard, Upload, BarChart3, Settings,
+  PanelLeftClose, PanelLeft, Brain, Store, Search,
+  Compass, Lightbulb, Building2, Play, ListChecks,
+  FolderOpen, BookOpen, Rocket, Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 
 interface NavItem {
   label: string
@@ -80,29 +66,25 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
                 "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 collapsed && "justify-center px-2",
                 isActive
-                  ? "bg-gradient-to-r from-purple-50 to-transparent dark:from-purple-950/30 dark:to-transparent text-purple-700 dark:text-purple-300 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                  ? "bg-gradient-to-r from-purple-500/20 to-transparent text-purple-300 shadow-sm"
+                  : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
               )}
             >
-              {/* Active indicator bar */}
               {isActive && (
                 <motion.div
                   layoutId="activeBar"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-purple-600"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
-
-              {/* Icon container */}
               <div className={cn(
                 "flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-all duration-200",
                 isActive
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-                  : "text-gray-400 dark:text-gray-500"
+                  ? "bg-purple-600 text-white shadow-md shadow-purple-500/30"
+                  : "text-gray-400"
               )}>
-                <Icon className="h-4 w-4" strokeWidth={1.5} />
+                <Icon className="h-4 w-4" />
               </div>
-
               <AnimatePresence mode="wait">
                 {!collapsed && (
                   <motion.span
@@ -115,10 +97,8 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
                   </motion.span>
                 )}
               </AnimatePresence>
-
-              {/* Badge */}
               {!collapsed && item.badge && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-bold tracking-wider">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-purple-500/30 text-purple-300 font-bold">
                   {item.badge}
                 </span>
               )}
@@ -130,102 +110,89 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
   )
 }
 
+function NavSection({ label, items, collapsed }: { label: string; items: NavItem[]; collapsed: boolean }) {
+  return (
+    <div>
+      {!collapsed && (
+        <div className="flex items-center gap-2 px-3 mb-1">
+          <div className="h-px flex-1 bg-gradient-to-l from-purple-500/20 to-transparent" />
+          <span className="text-[9px] font-bold text-gray-500 tracking-widest uppercase">{label}</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-purple-500/20 to-transparent" />
+        </div>
+      )}
+      <div className="space-y-0.5">
+        <NavGroup items={items} collapsed={collapsed} />
+      </div>
+    </div>
+  )
+}
+
 export function Sidebar() {
-  const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
   return (
     <motion.aside
       animate={{ width: collapsed ? 72 : 260 }}
       className={cn(
-        "fixed right-0 top-0 z-40 flex h-screen flex-col border-l border-gray-100 dark:border-gray-800/50 bg-white dark:bg-gray-950 transition-colors",
-        "shadow-[0_0_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-none"
+        "fixed right-0 top-0 z-40 flex h-screen flex-col border-l border-white/10",
+        "bg-gray-900 text-white shadow-2xl shadow-purple-500/10"
       )}
     >
       {/* Logo */}
-      <div className={cn("flex h-[72px] items-center gap-3 px-4 border-b border-gray-100 dark:border-gray-800/50", collapsed && "justify-center px-2")}>
+      <div className={cn("flex h-[72px] items-center gap-3 px-4 border-b border-white/10", collapsed && "justify-center px-2")}>
         <AnimatePresence mode="wait">
           {!collapsed ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg shadow-purple-500/20">
-                <Brain className="h-5 w-5 text-white" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-3">
+              <div className="relative">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30">
+                  <Brain className="h-5 w-5 text-white" />
+                </div>
+                <motion.div
+                  className="absolute -inset-1 rounded-xl bg-purple-500/20 blur-md"
+                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
               </div>
               <div>
-                <h1 className="text-sm font-bold bg-gradient-to-l from-purple-600 to-indigo-600 bg-clip-text text-transparent">AdMind AI</h1>
-                <p className="text-[9px] text-gray-400 font-medium tracking-wide">منصة تحليلات ذكية</p>
+                <h1 className="text-sm font-bold bg-gradient-to-l from-purple-400 to-pink-400 bg-clip-text text-transparent">AdMind AI</h1>
+                <div className="flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5 text-purple-400" />
+                  <p className="text-[9px] text-gray-400 font-medium">منصة تحليلات ذكية</p>
+                </div>
               </div>
             </motion.div>
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg shadow-purple-500/20">
-              <Brain className="h-5 w-5 text-white" />
+            <div className="relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg">
+                <Brain className="h-5 w-5 text-white" />
+              </div>
+              <motion.div
+                className="absolute -inset-1 rounded-xl bg-purple-500/20 blur-md"
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
             </div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-5">
-        {/* Main Tools */}
-        {!collapsed && (
-          <div className="px-3">
-            <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">الأدوات الرئيسية</p>
-          </div>
-        )}
-        <div className="space-y-0.5">
-          <NavGroup items={mainTools} collapsed={collapsed} />
-        </div>
-
-        <Separator className="bg-gray-100 dark:bg-gray-800/50" />
-
-        {/* Analytics */}
-        {!collapsed && (
-          <div className="px-3">
-            <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">التحليلات</p>
-          </div>
-        )}
-        <div className="space-y-0.5">
-          <NavGroup items={analytics} collapsed={collapsed} />
-        </div>
-
-        <Separator className="bg-gray-100 dark:bg-gray-800/50" />
-
-        {/* Brands */}
-        {!collapsed && (
-          <div className="px-3">
-            <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">البراندات</p>
-          </div>
-        )}
-        <div className="space-y-0.5">
-          <NavGroup items={brands} collapsed={collapsed} />
-        </div>
-
-        <Separator className="bg-gray-100 dark:bg-gray-800/50" />
-
-        {/* Research */}
-        {!collapsed && (
-          <div className="px-3">
-            <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">أدوات ذكية</p>
-          </div>
-        )}
-        <div className="space-y-0.5">
-          <NavGroup items={research} collapsed={collapsed} />
-        </div>
+      <nav className="flex-1 overflow-y-auto p-3 space-y-5">
+        <NavSection label="الأدوات الرئيسية" items={mainTools} collapsed={collapsed} />
+        <NavSection label="التحليلات" items={analytics} collapsed={collapsed} />
+        <NavSection label="البراندات" items={brands} collapsed={collapsed} />
+        <NavSection label="أدوات ذكية" items={research} collapsed={collapsed} />
       </nav>
 
-      {/* Bottom: collapse toggle + settings */}
-      <div className="border-t border-gray-100 dark:border-gray-800/50 p-3 space-y-1">
+      {/* Bottom */}
+      <div className="border-t border-white/10 p-3 space-y-1">
         <NavGroup items={bottomItems} collapsed={collapsed} />
         <Button
           variant="ghost"
           size={collapsed ? "icon" : "default"}
           onClick={() => setCollapsed(!collapsed)}
           className={cn(
-            "w-full rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/30 text-gray-400",
+            "w-full rounded-xl hover:bg-white/10 text-gray-400 hover:text-gray-200",
             collapsed && "h-10 w-10 mx-auto"
           )}
         >

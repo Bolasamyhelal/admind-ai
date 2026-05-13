@@ -73,9 +73,10 @@ export function OverviewChart({ data, currency = "USD" }: OverviewChartProps) {
                 borderRadius: "8px",
                 fontSize: "13px",
               }}
-              formatter={(value: number, name: string) => {
-                if (name === "roas") return [`${value.toFixed(2)}x`, "ROAS"]
-                return [formatCurrency(value, currency), name === "revenue" ? "الإيرادات" : "الإنفاق"]
+              formatter={(value: any, name: any) => {
+                const num = Number(value) || 0
+                if (name === "roas") return [`${num.toFixed(2)}x`, "ROAS"]
+                return [formatCurrency(num, currency), name === "revenue" ? "الإيرادات" : "الإنفاق"]
               }}
             />
             {metric === "revenue" && (
