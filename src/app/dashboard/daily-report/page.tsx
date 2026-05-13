@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { cn } from "@/lib/utils"
 import {
   Loader2, FileText, Download, Sparkles, Plus, Trash2,
   Brain, CheckCircle2, Edit3, Wand2, MessageSquare,
@@ -230,22 +231,30 @@ export default function DailyReportPage() {
                       </div>
                     )}
 
-                    {/* AI Formatted Content — structured blocks */}
-                    <div className="rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20 p-6 mb-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <FileText className="h-4 w-4 text-purple-400" />
-                        <h3 className="text-sm font-bold text-white">التقرير التنفيذي</h3>
+                    {/* Report table */}
+                    <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden mb-6">
+                      {/* Table header */}
+                      <div className="grid grid-cols-[36px_1fr] gap-3 bg-white/10 px-5 py-3">
+                        <span className="text-[10px] font-bold text-gray-400 text-center">#</span>
+                        <span className="text-[10px] font-bold text-gray-400">الإنجاز</span>
                       </div>
-                      <div className="space-y-3">
-                        {formattedReport.split("\n").filter(l => l.trim()).map((line, i) => (
-                          <div key={i} className="flex items-start gap-3">
-                            <div className="flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-[10px] font-bold text-white shrink-0 mt-0.5">
-                              {i + 1}
-                            </div>
-                            <p className="text-sm text-gray-200 leading-relaxed">{line}</p>
+                      {/* Table rows */}
+                      {formattedReport.split("\n").filter(l => l.trim()).map((line, i) => (
+                        <div key={i} className={cn(
+                          "grid grid-cols-[36px_1fr] gap-3 px-5 py-3.5",
+                          i % 2 === 0 ? "bg-white/5" : "bg-transparent"
+                        )}>
+                          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-[10px] font-bold text-white mx-auto">
+                            {i + 1}
                           </div>
-                        ))}
-                      </div>
+                          <p className="text-sm text-gray-200">{line}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary line */}
+                    <div className="text-center mb-4">
+                      <p className="text-xs text-gray-500">إجمالي {entries.length} إنجاز — {new Date().toLocaleDateString("ar-EG")}</p>
                     </div>
 
                     {/* Footer */}
