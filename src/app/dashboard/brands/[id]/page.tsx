@@ -54,6 +54,14 @@ function getHealthBg(score: number | null) {
   return "border-red-500"
 }
 
+function toAmPm(time24: string) {
+  if (!time24) return ""
+  const [h, m] = time24.split(":").map(Number)
+  const ampm = h >= 12 ? "م" : "ص"
+  const h12 = h % 12 || 12
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`
+}
+
 function getHealthLabel(score: number | null) {
   if (score === null) return "—"
   if (score >= 70) return "ممتاز"
@@ -1084,10 +1092,9 @@ export default function BrandDetailPage() {
                           </div>
                           {convertedTime && (
                             <div className="mt-1.5 flex items-center gap-1.5 text-[10px]">
-                              <span className="text-indigo-600 dark:text-indigo-400 font-medium">{postTime}</span>
-                              <span className="text-gray-400">⬅</span>
-                              <span className="text-amber-600 dark:text-amber-400 font-bold">{convertedTime}</span>
-                              <span className="text-gray-400">بتوقيت الحساب</span>
+                              <span className="text-indigo-600 dark:text-indigo-400 font-medium">{toAmPm(postTime)}</span>
+                              <span className="text-gray-400">⬅ بتوقيت الحساب</span>
+                              <span className="text-amber-600 dark:text-amber-400 font-bold">{toAmPm(convertedTime)}</span>
                             </div>
                           )}
                         </div>
