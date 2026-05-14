@@ -11,6 +11,7 @@ import {
   Clock, History, ChevronLeft, Eye,
 } from "lucide-react"
 
+
 interface Entry {
   id: string
   brand: string
@@ -29,7 +30,7 @@ export default function DailyReportPage() {
   const [brand, setBrand] = useState("")
   const [text, setText] = useState("")
   const [generating, setGenerating] = useState(false)
-  const [exporting, setExporting] = useState<"pdf" | "word" | null>(null)
+  const [exporting, setExporting] = useState<"pdf" | "word" | "excel" | null>(null)
   const [saving, setSaving] = useState(false)
   const [formattedReport, setFormattedReport] = useState("")
   const [showResult, setShowResult] = useState(false)
@@ -37,6 +38,7 @@ export default function DailyReportPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [activeReportId, setActiveReportId] = useState<string | null>(null)
   const reportRef = useRef<HTMLDivElement>(null)
 
   const todayName = new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
@@ -99,6 +101,7 @@ export default function DailyReportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: activeReportId,
           title: `التقرير اليومي - ${todayKey}`,
           entries,
           report: formattedReport,
@@ -140,58 +143,211 @@ export default function DailyReportPage() {
   const downloadWord = async () => {
     setExporting("word")
     try {
+      const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+        WidthType, AlignmentType, BorderStyle, Header, Footer, PageNumber } = await import("docx")
+
       const lines = formattedReport.split("\n").filter(l => l.trim())
-      const entriesHtml = lines.map((line, i) => `
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #333;text-align:center;color:#a78bfa;font-weight:bold;font-size:13px;">${i + 1}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #333;color:#e5e7eb;font-size:13px;">${line}</td>
-        </tr>
-      `).join("")
+      const now = new Date()
 
-      const html = `<!DOCTYPE html>
-<html dir="rtl">
-<head><meta charset="utf-8"><title>AdMind AI Report</title></head>
-<body style="margin:0;padding:20px;font-family:'Segoe UI',sans-serif;background:#0a0a0a;">
-  <div style="max-width:700px;margin:0 auto;background:linear-gradient(135deg,#111,#0a0a1a);border-radius:16px;overflow:hidden;border:1px solid #222;">
-    <div style="height:4px;background:linear-gradient(to left,#a855f7,#ec4899,#6366f1,#a855f7);"></div>
-    <div style="padding:30px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#db2777);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:18px;">A</div>
-          <div><h1 style="margin:0;font-size:20px;color:white;">AdMind AI</h1><p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">${todayEn}</p></div>
-        </div>
-        <div style="text-align:left;">
-          <p style="margin:0;font-size:10px;color:#6b7280;">تقرير</p>
-          <p style="margin:0;font-size:14px;color:white;font-weight:bold;">يومي</p>
-        </div>
-      </div>
-      <div style="text-align:center;margin-bottom:30px;">
-        <p style="font-size:48px;font-weight:bold;margin:0;background:linear-gradient(to left,#a855f7,#db2777,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${entries.length}</p>
-        <p style="color:#9ca3af;font-size:14px;margin:0;">إنجاز تم اليوم</p>
-      </div>
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr>
-          <th style="padding:8px 12px;border-bottom:2px solid #333;color:#6b7280;font-size:10px;text-align:center;">#</th>
-          <th style="padding:8px 12px;border-bottom:2px solid #333;color:#6b7280;font-size:10px;text-align:right;">الإنجاز</th>
-        </tr></thead>
-        <tbody>${entriesHtml}</tbody>
-      </table>
-      <div style="margin-top:30px;padding-top:20px;border-top:1px solid #222;display:flex;justify-content:space-between;">
-        <p style="margin:0;font-size:9px;color:#6b7280;">تم إنشاؤه بواسطة AdMind AI · ${new Date().toLocaleString("ar-EG")}</p>
-        <p style="margin:0;font-size:10px;color:#9ca3af;">AdMind AI</p>
-      </div>
-    </div>
-  </div>
-</body></html>`
+      const rows = lines.map((line, i) =>
+        new TableRow({
+          tableHeader: i === 0,
+          children: [
+            new TableCell({
+              width: { size: 600, type: WidthType.DXA },
+              shading: { fill: i % 2 === 0 ? "1a1a2e" : "0d0d1a" },
+              verticalAlign: "center",
+              children: [new Paragraph({
+                alignment: AlignmentType.CENTER,
+                bidirectional: true,
+                children: [new TextRun({ text: String(i + 1), size: 22, color: "a78bfa", bold: true })],
+              })],
+            }),
+            new TableCell({
+              width: { size: 10000, type: WidthType.DXA },
+              shading: { fill: i % 2 === 0 ? "1a1a2e" : "0d0d1a" },
+              verticalAlign: "center",
+              children: [new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                bidirectional: true,
+                children: [new TextRun({ text: line, size: 22, color: "e5e7eb" })],
+              })],
+            }),
+          ],
+        })
+      )
 
-      const blob = new Blob([html], { type: "application/msword" })
+      const doc = new Document({
+        sections: [{
+          properties: {
+            page: {
+              margin: { top: 1440, bottom: 1440, right: 1440, left: 1440 },
+            },
+          },
+          headers: {
+            default: new Header({
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 100 },
+                  bidirectional: true,
+                  children: [
+                    new TextRun({ text: "AdMind AI", size: 28, bold: true, color: "7c3aed" }),
+                    new TextRun({ text: "  |  ", size: 20, color: "6b7280" }),
+                    new TextRun({ text: now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }), size: 20, color: "9ca3af" }),
+                  ],
+                }),
+              ],
+            }),
+          },
+          footers: {
+            default: new Footer({
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  bidirectional: true,
+                  children: [
+                    new TextRun({ text: "تم إنشاؤه بواسطة AdMind AI  |  ", size: 16, color: "6b7280" }),
+                    new TextRun({ children: [PageNumber.CURRENT], size: 16, color: "6b7280" }),
+                  ],
+                }),
+              ],
+            }),
+          },
+          children: [
+            // Title
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 200 },
+              bidirectional: true,
+              children: [
+                new TextRun({ text: "التقرير اليومي", size: 36, bold: true, color: "7c3aed" }),
+              ],
+            }),
+
+            // Date
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 400 },
+              bidirectional: true,
+              children: [
+                new TextRun({ text: now.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" }), size: 22, color: "9ca3af" }),
+              ],
+            }),
+
+            // Divider line
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 400 },
+              border: {
+                bottom: { style: BorderStyle.SINGLE, size: 6, color: "7c3aed" },
+              },
+              children: [],
+            }),
+
+            // Count
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 100 },
+              bidirectional: true,
+              children: [
+                new TextRun({ text: String(entries.length), size: 56, bold: true, color: "7c3aed" }),
+              ],
+            }),
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 400 },
+              bidirectional: true,
+              children: [
+                new TextRun({ text: "إنجاز تم اليوم", size: 24, color: "9ca3af" }),
+              ],
+            }),
+
+            // Brands
+            ...(brands.length > 0 ? [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+                bidirectional: true,
+                children: brands.map((b, i) =>
+                  new TextRun({ text: i < brands.length - 1 ? `${b}  •  ` : b, size: 22, color: "a78bfa", bold: true })
+                ),
+              }),
+            ] : []),
+
+            // Table header
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({
+                  tableHeader: true,
+                  children: [
+                    new TableCell({
+                      width: { size: 600, type: WidthType.DXA },
+                      shading: { fill: "7c3aed" },
+                      verticalAlign: "center",
+                      children: [new Paragraph({
+                        alignment: AlignmentType.CENTER,
+                        children: [new TextRun({ text: "#", size: 22, bold: true, color: "ffffff" })],
+                      })],
+                    }),
+                    new TableCell({
+                      width: { size: 10000, type: WidthType.DXA },
+                      shading: { fill: "7c3aed" },
+                      verticalAlign: "center",
+                      children: [new Paragraph({
+                        alignment: AlignmentType.RIGHT,
+                        bidirectional: true,
+                        children: [new TextRun({ text: "الإنجاز", size: 22, bold: true, color: "ffffff" })],
+                      })],
+                    }),
+                  ],
+                }),
+                ...rows,
+              ],
+            }),
+
+            // Footer note
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              spacing: { before: 400 },
+              bidirectional: true,
+              children: [
+                new TextRun({ text: `إجمالي ${entries.length} إنجاز — ${now.toLocaleDateString("ar-EG")}`, size: 20, color: "6b7280" }),
+              ],
+            }),
+          ],
+        }],
+      })
+
+      const blob = await Packer.toBlob(doc)
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `AdMind_Report_${todayKey}.doc`
+      a.download = `AdMind_Report_${todayKey}.docx`
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) { console.error("Word export failed:", err) }
+    setExporting(null)
+  }
+
+  const downloadExcel = async () => {
+    setExporting("excel")
+    try {
+      const res = await fetch("/api/daily-report/excel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries, formattedReport, date: todayKey }),
+      })
+      if (!res.ok) throw new Error("Export failed")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `AdMind_Report_${todayKey}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) { console.error("Excel export failed:", err) }
     setExporting(null)
   }
 
@@ -201,6 +357,7 @@ export default function DailyReportPage() {
       const r = await fetch(`/api/daily-report/save?id=${id}&userId=${user.id}`)
       const d = await r.json()
       if (d.report) {
+        setActiveReportId(id)
         setSelectedReport(d.report)
         setEntries(d.report.entries || [])
         setFormattedReport(d.report.formattedReport || "")
@@ -326,9 +483,14 @@ export default function DailyReportPage() {
                   <h2 className="text-sm font-bold text-gray-900 dark:text-white">التقرير بعد الصياغة</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button onClick={downloadExcel} disabled={exporting !== null}
+                    className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-900/30 text-emerald-300 px-3 py-2 text-sm font-medium hover:bg-emerald-900/50 transition-all disabled:opacity-50">
+                    {exporting === "excel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                    Excel
+                  </button>
                   <button onClick={downloadWord} disabled={exporting !== null}
                     className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-all disabled:opacity-50">
-                    {exporting === "word" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
+                    {exporting === "word" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                     Word
                   </button>
                   <button onClick={downloadPDF} disabled={exporting !== null}

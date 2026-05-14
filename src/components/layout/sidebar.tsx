@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Upload, BarChart3, Settings,
   PanelLeftClose, PanelLeft, Brain, Store, Search,
   Compass, Lightbulb, Building2, Play, ListChecks,
-  FolderOpen, BookOpen, Rocket, Sparkles, FileText,
+  FolderOpen, BookOpen, Rocket, Sparkles, FileText, DollarSign,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,7 @@ const mainTools: NavItem[] = [
 const analytics: NavItem[] = [
   { label: "رفع تقارير", href: "/dashboard/upload", icon: Upload },
   { label: "التقارير", href: "/dashboard/reports", icon: BarChart3 },
+  { label: "أسعار العملات", href: "/dashboard/currency-rates", icon: DollarSign, badge: "جديد" },
   { label: "التقرير اليومي", href: "/dashboard/daily-report", icon: FileText, badge: "جديد" },
   { label: "المهام اليومية", href: "/dashboard/tasks", icon: ListChecks },
   { label: "قاموس الميتركس", href: "/dashboard/glossary", icon: BookOpen },

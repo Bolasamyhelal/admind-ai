@@ -46,25 +46,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Check if a report for this date already exists
-    const existing = await prisma.report.findFirst({
-      where: { userId, type: "daily", title: body.title },
-    })
-
     const data = JSON.stringify({ entries: body.entries, formattedReport: body.report, date: body.date })
 
-    if (existing) {
-      await prisma.report.update({ where: { id: existing.id }, data: { data } })
+    // If report ID provided, update that specific report
+    if (body.id) {
+      await prisma.report.update({ where: { id: body.id }, data: { data } })
     } else {
-      await prisma.report.create({
-        data: {
-          title: body.title,
-          type: "daily",
-          data,
-          format: "html",
-          userId,
-        },
+      // Upsert by title (same-day reports update instead of duplicating)
+      const existing = await prisma.report.findFirst({
+        where: { userId, type: "daily", title: body.title },
       })
+      if (existing) {
+        await prisma.report.update({ where: { id: existing.id }, data: { data } })
+      } else {
+        await prisma.report.create({
+          data: {
+            title: body.title,
+            type: "daily",
+            data,
+            format: "html",
+            userId,
+          },
+        })
+      }
     }
 
     return NextResponse.json({ success: true })

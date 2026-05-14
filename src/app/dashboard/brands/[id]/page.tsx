@@ -11,7 +11,7 @@ import {
   BarChart3, Image, Play, Download, ExternalLink, Sparkles,
   Users, Monitor, ShoppingBag, ListChecks, Plus, CheckCircle2, Circle,
   Layers, ChevronDown, FileText, Clock, Percent, Activity, X, Info,
-  Lightbulb, AlertTriangle, CheckCircle, TrendingDown, Clock3, Brain,
+  Lightbulb, AlertTriangle, CheckCircle, TrendingDown, Clock3, Brain, Trash2, RotateCw,
 } from "lucide-react"
 import { AssignmentCard } from "@/components/brand/assignment-card"
 
@@ -393,13 +393,21 @@ export default function BrandDetailPage() {
   const params = useParams()
   const brandId = params?.id as string
 
-  useEffect(() => {
+  const loadBrandData = async () => {
     if (!user || !brandId) return
-    fetch(`/api/brands?id=${brandId}&userId=${user.id}`)
-      .then((r) => r.json())
-      .then((d) => { setBrand(d.brand); setData(d); setLoading(false) })
-      .catch(() => { setError("فشل تحميل البراند"); setLoading(false) })
-  }, [user, brandId])
+    try {
+      const r = await fetch(`/api/brands?id=${brandId}&userId=${user.id}`)
+      const d = await r.json()
+      setBrand(d.brand)
+      setData(d)
+      setLoading(false)
+    } catch {
+      setError("فشل تحميل البراند")
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadBrandData() }, [user, brandId])
 
   useEffect(() => {
     if (!data?.analyses?.length) return
@@ -514,6 +522,28 @@ export default function BrandDetailPage() {
     setBrandGoals((prev) => prev.filter((g) => g.id !== id))
   }
 
+  const deleteUpload = async (e: React.MouseEvent, uploadId: string) => {
+    e.stopPropagation()
+    if (!confirm("تأكيد حذف هذا التقرير؟")) return
+    try {
+      await fetch(`/api/upload?id=${uploadId}`, { method: "DELETE" })
+      loadBrandData()
+    } catch {}
+  }
+
+  const deleteCampaignFromBrand = async (e: React.MouseEvent, campaignId: string) => {
+    e.stopPropagation()
+    if (!confirm("تأكيد حذف الحملة؟ سيتم حذف جميع تسجيلاتها اليومية")) return
+    try {
+      await fetch("/api/campaign-exec", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: campaignId }),
+      })
+      loadBrandData()
+    } catch {}
+  }
+
   const handleExport = () => {
     if (!data) return
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
@@ -574,10 +604,13 @@ export default function BrandDetailPage() {
           <div className="relative rounded-2xl bg-white/10 backdrop-blur-sm p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start gap-6">
               {/* Brand Identity */}
-              <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
                   <button onClick={() => router.push("/dashboard/brands")} className="p-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all">
                     <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <button onClick={loadBrandData} className="p-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all" title="تحديث البيانات">
+                    <RotateCw className="h-4 w-4" />
                   </button>
                   <div className="p-2.5 rounded-xl bg-white/15">
                     <Store className="h-5 w-5 text-white" />
@@ -902,7 +935,7 @@ export default function BrandDetailPage() {
                 <div className="p-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {displayUploads.map((u: any) => (
-                      <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+                      <div key={u.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group">
                         <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
                           <FileText className="h-4 w-4 text-amber-500" />
                         </div>
@@ -913,6 +946,9 @@ export default function BrandDetailPage() {
                             {new Date(u.createdAt).toLocaleDateString("ar-EG")}
                           </p>
                         </div>
+                        <button onClick={(e) => deleteUpload(e, u.id)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -939,7 +975,7 @@ export default function BrandDetailPage() {
                 <div className="p-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {displayCampaigns.map((c: any) => (
-                      <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors">
+                      <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group">
                         <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                           <Play className="h-4 w-4 text-blue-500" />
                         </div>
@@ -950,6 +986,9 @@ export default function BrandDetailPage() {
                             {c.goal && <><span>·</span><span>{c.goal}</span></>}
                           </div>
                         </div>
+                        <button onClick={(e) => deleteCampaignFromBrand(e, c.id)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     ))}
                   </div>

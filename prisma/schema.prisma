@@ -321,3 +321,11 @@ model TaskChecklist {
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  date      String   @unique // "YYYY-MM-DD"
+  aedToEgp  Float    // 1 AED = ? EGP
+  sarToEgp  Float    // 1 SAR = ? EGP
+  createdAt DateTime @default(now())
+}
